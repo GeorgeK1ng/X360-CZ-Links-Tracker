@@ -259,15 +259,19 @@ def main():
         data.update(folder_id=ident, source=args.folder, scanned_at=now,
                     files=merge(data['files'], found, now))
         print(f'Nalezeno {len(found)} souborů.')
+        data.pop('download_check_completed_at', None)
+        data.pop('checked_scan_at', None)
         if args.check_downloads:
             check_records(data)
             data['download_check_completed_at'] = datetime.now(timezone.utc).isoformat()
+            data['checked_scan_at'] = data.get('scanned_at')
     elif args.command == 'check':
-        if not data['files']:
+        if 'folder_id' not in data:
             raise ValueError('Nejdřív spusť scan.')
         check_records(data, args.id)
         if not args.id:
             data['download_check_completed_at'] = datetime.now(timezone.utc).isoformat()
+            data['checked_scan_at'] = data.get('scanned_at')
     else:
         if args.id not in data['files']:
             raise ValueError('Neznámé ID souboru. Nejdřív spusť scan.')

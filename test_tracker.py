@@ -94,3 +94,32 @@ class ReadmeTests(unittest.TestCase):
             result = (root/'README.md').read_text()
             self.assertEqual(result.count(README_START), 1)
             self.assertIn('# Vlastní návod', result)
+
+class RefreshTests(unittest.TestCase):
+    def test_fresh_inventory_drives_links_and_checks(self):
+        from tracker import merge, check_records, export
+        from pathlib import Path
+        import tempfile
+        old = {'removed': dict(id='removed', name='Old', url='https://webshare.cz/#/file/removed', folders=[], size_bytes='1', status='hotovo', note='Keep', first_seen='old', last_seen='old', present=True)}
+        found = {'new': dict(id='new', name='New', url='https://webshare.cz/#/file/new', folders=['Root'], size_bytes='1')}
+        data = {'files': merge(old, found, 'now')}
+        calls = []
+        def request(ident):
+            calls.append(ident)
+            return ET.fromstring('<response><status>FATAL</status><code>FILE_LINK_FATAL_4</code></response>')
+        check_records(data, request=request, delay=0)
+        self.assertEqual(calls, ['new'])
+        self.assertEqual(data['files']['removed']['status'], 'hotovo')
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp:
+            out = Path(tmp)/'data'
+            export(data, out)
+            self.assertEqual((out/'links.txt').read_text(), 'https://webshare.cz/#/file/new\n')
+
+    def test_workflow_refresh_precedes_check_and_status(self):
+        from pathlib import Path
+        workflow = (Path(__file__).parent/'.github/workflows/inventory.yml').read_text()
+        scan = workflow.index('run: python -u tracker.py scan')
+        check = workflow.index('run: python -u tracker.py check')
+        status = workflow.index('python tracker.py status')
+        self.assertLess(scan, check)
+        self.assertLess(check, status)

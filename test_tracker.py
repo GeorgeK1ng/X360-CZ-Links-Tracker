@@ -25,7 +25,7 @@ class TrackerTests(unittest.TestCase):
         self.assertEqual(result['a']['status'], 'hotovo')
         self.assertEqual(result['a']['note'], 'OK')
         self.assertEqual(result['a']['first_seen'], 'before')
-        self.assertFalse(result['b']['present'])
+        self.assertNotIn('b', result)
 
     def test_repeated_page_fails(self):
         def fetch(*args):
@@ -68,8 +68,8 @@ class DownloadTests(unittest.TestCase):
         from tracker import merge
         old = {'a': {'status': 'hotovo', 'note': 'OK', 'download_status': 'dočasně_nedostupný', 'checked_at': 'yesterday'}}
         new = merge(old, {'a': {'name': 'A'}}, 'today')['a']
-        self.assertEqual(new['download_status'], 'dočasně_nedostupný')
-        self.assertEqual(new['checked_at'], 'yesterday')
+        self.assertNotIn('download_status', new)
+        self.assertNotIn('checked_at', new)
         self.assertEqual(new['status'], 'hotovo')
 
 class ReadmeTests(unittest.TestCase):
@@ -109,7 +109,7 @@ class RefreshTests(unittest.TestCase):
             return ET.fromstring('<response><status>FATAL</status><code>FILE_LINK_FATAL_4</code></response>')
         check_records(data, request=request, delay=0)
         self.assertEqual(calls, ['new'])
-        self.assertEqual(data['files']['removed']['status'], 'hotovo')
+        self.assertNotIn('removed', data['files'])
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp:
             out = Path(tmp)/'data'
             export(data, out)

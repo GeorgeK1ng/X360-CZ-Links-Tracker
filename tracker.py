@@ -15,7 +15,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
-DEFAULT = 'https://webshare.cz/#/folder/QFWv3mjitp/xbox360cz'
+DEFAULT = os.environ.get('WEBSHARE_FOLDER_URL') or 'https://webshare.cz/#/folder/QFWv3mjitp/xbox360cz'
 STATUSES = ('nové', 'rozpracováno', 'hotovo', 'přeskočeno', 'problém')
 
 
@@ -148,10 +148,10 @@ def atomic(path, text):
 
 
 def merge(old, found, now):
-    records = {k: dict(v, present=False) for k, v in old.items()}
+    records = {}
     for fid, item in found.items():
-        previous = records.get(fid, {})
-        records[fid] = dict(item, **{k: previous[k] for k in CHECK_FIELDS if k in previous}, status=previous.get('status', 'nové'),
+        previous = old.get(fid, {})
+        records[fid] = dict(item, status=previous.get('status', 'nové'),
             note=previous.get('note', ''), first_seen=previous.get('first_seen', now),
             last_seen=now, present=True)
     return records
@@ -175,7 +175,7 @@ def render_summary(data):
              f"Poslední načtení složky: **{md(data.get('scanned_at', 'dosud neproběhlo'))}**.",
              f"Poslední dokončený průchod kontrolou: **{md(data.get('download_check_completed_at', 'dosud neproběhl'))}**.",
              f"Nejnovější kontrola jednotlivého souboru: {md(max(checks) if checks else 'dosud neproběhla')}. Časy jsou v UTC.", '',
-             f"**{len(current)} souborů ve složce · {len(problems)} výsledků k prověření · {len(rows) - len(current)} dříve evidovaných položek mimo aktuální seznam.**", '',
+             f"**{len(current)} souborů ve složce · {len(problems)} výsledků k prověření.**", '',
              '| Výsledek kontroly | Počet |', '| --- | ---: |']
     for status, count in sorted(counts.items()):
         lines.append(f'| {md(status)} | {count} |')
@@ -203,7 +203,7 @@ def update_readme(data, directory):
     # README is a generated snapshot, never append to a previous snapshot.
     text = ('# Webshare — aktuální seznam\n\n'
             'Tento soubor se při každém úspěšném exportu celý přegeneruje. '
-            'Návod: [USAGE.md](USAGE.md). Historie a ruční stavy: [inventory.json](data/inventory.json).\n\n'
+            'Návod: [USAGE.md](USAGE.md). Aktuální data a ruční stavy: [inventory.json](data/inventory.json).\n\n'
             + README_START + '\n' + summary + README_END + '\n')
     atomic(path, text)
     step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
@@ -250,7 +250,7 @@ def main():
     if args.command == 'scan':
         ident = folder_id(args.folder)
         if data.get('folder_id', ident) != ident:
-            raise ValueError('Pro jinou složku použij jiný --data-dir.')
+            data = {'files': {}}
         found = crawl(ident)  # No output mutation until the entire crawl succeeds.
         now = datetime.now(timezone.utc).isoformat()
         data.update(folder_id=ident, source=args.folder, scanned_at=now,

@@ -82,7 +82,7 @@ class ReadmeTests(unittest.TestCase):
         self.assertIn('A&#124;&lt;x&gt;&#91;test&#93;', result)
         self.assertIn('one two', result)
 
-    def test_readme_update_idempotent_preserves_prose(self):
+    def test_readme_update_idempotent_replaces_old_content(self):
         import tempfile
         from pathlib import Path
         from tracker import update_readme, README_START
@@ -93,7 +93,7 @@ class ReadmeTests(unittest.TestCase):
             update_readme({'files': {}}, root/'data')
             result = (root/'README.md').read_text()
             self.assertEqual(result.count(README_START), 1)
-            self.assertIn('# Vlastní návod', result)
+            self.assertNotIn('# Vlastní návod', result)
 
 class RefreshTests(unittest.TestCase):
     def test_fresh_inventory_drives_links_and_checks(self):
@@ -123,3 +123,23 @@ class RefreshTests(unittest.TestCase):
         status = workflow.index('python tracker.py status')
         self.assertLess(scan, check)
         self.assertLess(check, status)
+
+
+class CurrentSnapshotTests(unittest.TestCase):
+    def test_removed_links_absent_from_readme_and_csv(self):
+        from tracker import export
+        from pathlib import Path
+        import tempfile
+        records = {}
+        for fid, present in [('CURRENT', True), ('HISTORICAL', False)]:
+            records[fid] = dict(id=fid, name=fid, url='https://webshare.cz/#/file/' + fid, present=present, folders=[], size_bytes='1', status='nové', note='', first_seen='old', last_seen='now')
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as tmp:
+            root = Path(tmp)
+            (root/'README.md').write_text('Old stale links outside markers')
+            export({'files': records}, root/'data')
+            for path in [root/'README.md', root/'data/inventory.csv', root/'data/links.txt']:
+                text = path.read_text()
+                self.assertIn('CURRENT', text)
+                self.assertNotIn('HISTORICAL', text)
+                self.assertNotIn('Old stale links', text)
+            self.assertIn('HISTORICAL', (root/'data/inventory.json').read_text())

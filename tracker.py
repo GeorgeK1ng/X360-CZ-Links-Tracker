@@ -170,7 +170,7 @@ def render_summary(data):
     current = [r for r in rows if r['present']]
     counts = Counter(r.get('download_status') or 'nekontrolováno' for r in current)
     problems = [r for r in current if r.get('download_status') not in (None, '', 'odkaz_vydán')]
-    checks = [r['checked_at'] for r in rows if r.get('checked_at')]
+    checks = [r['checked_at'] for r in current if r.get('checked_at')]
     lines = ['## Aktuální přehled Webshare', '',
              f"Poslední načtení složky: **{md(data.get('scanned_at', 'dosud neproběhlo'))}**.",
              f"Poslední dokončený průchod kontrolou: **{md(data.get('download_check_completed_at', 'dosud neproběhl'))}**.",
@@ -179,7 +179,7 @@ def render_summary(data):
              '| Výsledek kontroly | Počet |', '| --- | ---: |']
     for status, count in sorted(counts.items()):
         lines.append(f'| {md(status)} | {count} |')
-    lines += ['', '`odkaz_vydán` znamená, že server vydal download URL; celý soubor ani jeho integrita nejsou ověřeny. Síťová chyba nebo limit neznamenají poškozený soubor. Starší kontrolu poznáš podle času u položky.', '',
+    lines += ['', '`odkaz_vydán` znamená, že server vydal download URL; celý soubor ani jeho integrita nejsou ověřeny. `nenalezen` je odpověď download API, nikoli tvrzení, že odkaz chybí ve složce. Každý řádek této tabulky byl nalezen ve složce při posledním načtení. Síťová chyba nebo limit neznamenají poškozený soubor. Starší kontrolu poznáš podle času u položky.', '',
               '### Položky k prověření', '']
     if problems:
         lines += ['| Soubor | Výsledek | Kód / zpráva |', '| --- | --- | --- |']
@@ -187,10 +187,10 @@ def render_summary(data):
             lines.append(f"| [{md(r['name'])}]({r['url']}) | {md(r['download_status'])} | {md(r.get('download_code', ''))}: {md(r.get('download_message', ''))} |")
     else:
         lines.append('Žádné zaznamenané problémy. Položky bez kontroly najdeš v tabulce níže.')
-    lines += ['', '### Všechny soubory', '',
+    lines += ['', '### Aktuální obsah složky', '',
               '| Soubor | ID | Ve složce | Stažení | Ruční stav | Poznámka | Kontrola (UTC) |',
               '| --- | --- | --- | --- | --- | --- | --- |']
-    for r in rows:
+    for r in current:
         present = 'ano' if r['present'] else 'ne'
         lines.append(f"| [{md(r['name'])}]({r['url']}) | {md(r['id'])} | {present} | {md(r.get('download_status') or 'nekontrolováno')} | {md(r.get('status', 'nové'))} | {md(r.get('note', ''))} | {md(r.get('checked_at', '—'))} |")
     lines += ['', 'Změna ručního stavu: **Actions → Webshare seznam → Run workflow** → vyplň ID z tabulky, stav a poznámku. Prázdné ID načte složku a zkontroluje všechny aktuální soubory.', '']
@@ -200,14 +200,11 @@ def render_summary(data):
 def update_readme(data, directory):
     summary = render_summary(data)
     path = directory.parent / 'README.md'
-    previous = path.read_text(encoding='utf-8') if path.exists() else '# Webshare seznam\n'
-    section = README_START + '\n' + summary + README_END
-    if README_START in previous and README_END in previous:
-        start = previous.index(README_START)
-        end = previous.index(README_END, start) + len(README_END)
-        text = previous[:start] + section + previous[end:]
-    else:
-        text = section + '\n\n' + previous
+    # README is a generated snapshot, never append to a previous snapshot.
+    text = ('# Webshare — aktuální seznam\n\n'
+            'Tento soubor se při každém úspěšném exportu celý přegeneruje. '
+            'Návod: [USAGE.md](USAGE.md). Historie a ruční stavy: [inventory.json](data/inventory.json).\n\n'
+            + README_START + '\n' + summary + README_END + '\n')
     atomic(path, text)
     step_summary = os.environ.get('GITHUB_STEP_SUMMARY')
     if step_summary:
@@ -216,7 +213,7 @@ def update_readme(data, directory):
 
 
 def export(data, directory):
-    rows = sorted(data['files'].values(), key=lambda x: x['name'].casefold())
+    rows = sorted((r for r in data['files'].values() if r['present']), key=lambda x: x['name'].casefold())
     out = io.StringIO(newline='')
     columns = ['id', 'name', 'url', 'size_bytes', 'folders', 'status', 'note', 'present', 'first_seen', 'last_seen', *CHECK_FIELDS]
     writer = csv.DictWriter(out, fieldnames=columns)

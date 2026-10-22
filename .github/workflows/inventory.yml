@@ -1,0 +1,59 @@
+name: Webshare seznam
+on:
+  workflow_dispatch:
+    inputs:
+      file_id:
+        description: 'ID souboru pro změnu stavu (prázdné = aktualizovat seznam)'
+        required: false
+        type: string
+      status:
+        description: Nový stav
+        type: choice
+        options: [nové, rozpracováno, hotovo, přeskočeno, problém]
+      note:
+        description: 'Poznámka (při změně stavu nahradí původní)'
+        required: false
+        type: string
+  schedule:
+    - cron: '0 5 * * *'
+permissions:
+  contents: write
+concurrency:
+  group: webshare-inventory
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Aktualizovat
+        env:
+          WEBSHARE_WST: ${{ secrets.WEBSHARE_WST }}
+          FILE_ID: ${{ inputs.file_id }}
+          NEW_STATUS: ${{ inputs.status }}
+          NOTE: ${{ inputs.note }}
+        run: |
+          if [ -n "$FILE_ID" ]; then
+            python tracker.py status "$FILE_ID" "$NEW_STATUS" --note "$NOTE"
+          else
+            python -u tracker.py scan --check-downloads
+          fi
+      - name: Uložit seznam a stavy
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/ README.md
+          if ! git diff --cached --quiet; then
+            git commit -m 'Aktualizace Webshare seznamu'
+            git push
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webshare-seznam
+          path: data/

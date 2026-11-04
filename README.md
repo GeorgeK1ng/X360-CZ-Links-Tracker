@@ -146,7 +146,7 @@ Po scanu vygenerujte veřejná data:
 python archive_tool.py build-site
 ```
 
-Statický web je v `docs/`. Neobsahuje lokální cesty, hesla ani tokeny. Po pushnutí změn workflow `Denní kontrola a publikace katalogu` nasadí obsah přes GitHub Pages. V nastavení repozitáře zvolte **Settings → Pages → Source: GitHub Actions**.
+Statický web je v `docs/`. Neobsahuje lokální cesty, hesla ani tokeny. V nastavení repozitáře jednorázově zvolte **Settings → Pages → Source: Deploy from a branch**, větev **main**, složku **/docs** a klikněte na **Save**. Denní workflow aktualizuje obsah této složky a GitHub Pages jej po commitu automaticky publikuje.
 
 ## Automatický provoz na GitHubu
 

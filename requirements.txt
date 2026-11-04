@@ -1,4 +1,4 @@
 openpyxl>=3.1,<4
 passlib>=1.7,<2
 requests>=2.32,<3
-
+Pillow>=11,<12

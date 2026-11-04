@@ -12,7 +12,7 @@
     <div>
       <p class="eyebrow">Xbox 360 · český archiv</p>
       <h1>Katalog her</h1>
-      <p class="lede">Přehled češtiny, metadat a dostupnosti archivních kopií.</p>
+      <p class="lede">Kurátorovaný přehled českých lokalizací, metadat a dostupnosti archivních kopií.</p>
     </div>
     <div class="summary" aria-live="polite">
       <div><strong id="total-count">—</strong><span>her v katalogu</span></div>
@@ -85,8 +85,25 @@
     <p id="empty" class="empty" hidden>Žádná hra neodpovídá zvoleným filtrům.</p>
   </main>
 
+  <footer class="site-footer">
+    <p>Obaly pocházejí z komunitního archivu <a href="https://github.com/UncreativeXenon/XboxUnity-Scraper" target="_blank" rel="noopener noreferrer">XboxUnity-Scraper</a>. Práva k obrazovým materiálům náleží jejich vlastníkům.</p>
+  </footer>
+
   <template id="game-template">
     <article class="game-card">
+      <div class="cover-gallery">
+        <div class="cover-stage">
+          <img class="cover-image" alt="" loading="lazy" decoding="async">
+          <div class="cover-fallback" aria-hidden="true"><span>XBOX 360</span></div>
+          <span class="cover-kind"></span>
+        </div>
+        <div class="cover-controls" hidden>
+          <button class="cover-prev" type="button" aria-label="Předchozí obal">‹</button>
+          <span class="cover-count"></span>
+          <button class="cover-next" type="button" aria-label="Další obal">›</button>
+        </div>
+      </div>
+      <div class="card-content">
       <div class="card-heading">
         <div>
           <p class="game-id"></p>
@@ -100,10 +117,24 @@
         <div><dt>Hodnocení</dt><dd class="rating"></dd></div>
         <div><dt>Vývojář</dt><dd class="developer"></dd></div>
         <div><dt>Čeština</dt><dd class="language"></dd></div>
+        <div><dt>Velikost</dt><dd class="size"></dd></div>
+        <div><dt>Formát</dt><dd class="format"></dd></div>
+        <div><dt>Title Update</dt><dd class="title-update"></dd></div>
       </dl>
+      <div class="package-details">
+        <div class="package-row dlc-row" hidden>
+          <span class="package-label">DLC v balíčku</span>
+          <ul class="dlc-list"></ul>
+        </div>
+        <div class="package-row note-row" hidden>
+          <span class="package-label">Poznámka</span>
+          <p class="game-note"></p>
+        </div>
+      </div>
       <div class="tags"></div>
       <div class="providers"></div>
       <div class="downloads"></div>
+      </div>
     </article>
   </template>
   <script src="app.js" defer></script>

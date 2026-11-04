@@ -34,13 +34,17 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - name: Vytvořit katalog, zkontrolovat Webshare a aktualizovat web
         run: python archive_tool.py --config config.ci.json refresh --remote-only
+      - name: Synchronizovat všechny dostupné obaly z XboxUnity
+        run: |
+          python tools/fetch_game_art.py
+          python archive_tool.py --config config.ci.json build-site
       - name: Spustit testy
         run: python -m unittest -q
       - name: Uložit aktualizovaný katalog a stav
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add catalog/games.json docs/data/games.json docs/data/missing.json
+          git add catalog/games.json catalog/cover-sources.json docs/assets/covers docs/data/games.json docs/data/missing.json
           if ! git diff --cached --quiet; then
             git commit -m 'Denní aktualizace katalogu'
             git push

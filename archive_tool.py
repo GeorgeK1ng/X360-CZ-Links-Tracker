@@ -81,6 +81,8 @@ def main(argv=None):
     state_dir = ROOT / config.get("state_dir", ".archive-state")
     archive_sizes_path = ROOT / config.get("archive_sizes", "catalog/archive-sizes.json")
     archive_sizes = json.loads(archive_sizes_path.read_text(encoding="utf-8")) if archive_sizes_path.exists() else {}
+    cover_manifest_path = ROOT / "catalog/cover-sources.json"
+    cover_manifest = json.loads(cover_manifest_path.read_text(encoding="utf-8")) if cover_manifest_path.exists() else {}
     providers = build_providers(config)
 
     if args.command in {"scan", "refresh"}:
@@ -112,7 +114,7 @@ def main(argv=None):
             active = len(remote["files"]) - removed
             print(f"{name}: {remote['status']}, aktivní={active}, odstraněné={removed}")
         if args.command == "refresh":
-            build_site(catalog, local, remotes, ROOT / "docs", remote_aliases, aliases, archive_sizes)
+            build_site(catalog, local, remotes, ROOT / "docs", remote_aliases, aliases, archive_sizes, cover_manifest)
             print("Webová data byla aktualizována.")
         return 0
 
@@ -145,7 +147,7 @@ def main(argv=None):
     remote_aliases = json.loads(remote_aliases_path.read_text(encoding="utf-8")) if remote_aliases_path.exists() else {}
     aliases_path = ROOT / config.get("aliases", "catalog/local-aliases.json")
     aliases = json.loads(aliases_path.read_text(encoding="utf-8")) if aliases_path.exists() else {}
-    build_site(catalog, local, remotes, ROOT / "docs", remote_aliases, aliases, archive_sizes)
+    build_site(catalog, local, remotes, ROOT / "docs", remote_aliases, aliases, archive_sizes, cover_manifest)
     print("Webová data byla vygenerována do docs/data/games.json.")
     return 0
 

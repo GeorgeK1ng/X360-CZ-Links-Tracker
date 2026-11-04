@@ -35,6 +35,7 @@ HEADER_MAP = {
     "Podpora Kinectu": "kinect_support",
     "Kinect povinný": "kinect_required",
     "Title ID": "title_id",
+    "Velikost archivu (GiB)": "archive_size_gib",
 }
 
 

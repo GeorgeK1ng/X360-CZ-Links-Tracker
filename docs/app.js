@@ -87,6 +87,66 @@ function populateFilters() {
   addOptions(elements.format, formats);
 }
 
+function setupGallery(card, game) {
+  const covers = game.covers || [];
+  const image = card.querySelector('.cover-image');
+  const fallback = card.querySelector('.cover-fallback');
+  const controls = card.querySelector('.cover-controls');
+  const count = card.querySelector('.cover-count');
+  const kind = card.querySelector('.cover-kind');
+  let index = 0;
+
+  function showCover(nextIndex) {
+    if (!covers.length) {
+      image.hidden = true;
+      fallback.hidden = false;
+      kind.textContent = 'Obal není dostupný';
+      return;
+    }
+    index = (nextIndex + covers.length) % covers.length;
+    const cover = covers[index];
+    image.hidden = false;
+    fallback.hidden = true;
+    image.src = cover.file;
+    image.alt = `Obal hry ${game.title}, varianta ${index + 1} z ${covers.length}`;
+    count.textContent = `${index + 1} / ${covers.length}`;
+    kind.textContent = cover.official ? 'Oficiální obal' : 'Komunitní obal';
+  }
+
+  controls.hidden = covers.length < 2;
+  card.querySelector('.cover-prev').addEventListener('click', () => showCover(index - 1));
+  card.querySelector('.cover-next').addEventListener('click', () => showCover(index + 1));
+  showCover(0);
+}
+
+function setupPackageDetails(card, game) {
+  card.querySelector('.format').textContent = game.format || '—';
+  const update = Number(game.title_update || 0);
+  card.querySelector('.title-update').textContent = update > 0 ? `TU ${update}` : 'neuveden';
+
+  const dlc = String(game.dlc || '')
+    .split(/\r?\n|\s*;\s*/)
+    .map(value => value.trim())
+    .filter(value => value && value !== '-');
+  const dlcRow = card.querySelector('.dlc-row');
+  if (dlc.length) {
+    dlcRow.hidden = false;
+    const list = card.querySelector('.dlc-list');
+    for (const name of dlc) {
+      const item = document.createElement('li');
+      item.textContent = name;
+      list.append(item);
+    }
+  }
+
+  const note = String(game.note || '').trim();
+  const noteRow = card.querySelector('.note-row');
+  if (note) {
+    noteRow.hidden = false;
+    card.querySelector('.game-note').textContent = note;
+  }
+}
+
 function render() {
   const games = sortGames(state.games.filter(matches));
   elements.games.replaceChildren();
@@ -100,6 +160,9 @@ function render() {
     card.querySelector('.rating').textContent = game.rating != null ? `${game.rating}/100` : '—';
     card.querySelector('.developer').textContent = game.developer || '—';
     card.querySelector('.language').textContent = languageText(game);
+    card.querySelector('.size').textContent = game.archive_size_gib != null ? `${game.archive_size_gib.toLocaleString('cs-CZ')} GiB` : '—';
+    setupGallery(card, game);
+    setupPackageDetails(card, game);
     const status = card.querySelector('.status');
     const mainStatus = primaryStatus(game);
     status.textContent = statusLabel(mainStatus);

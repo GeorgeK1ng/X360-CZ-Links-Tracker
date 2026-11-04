@@ -6,7 +6,7 @@ from pathlib import Path
 
 def build_site(catalog: dict, local: dict | None, remotes: dict | None, output: Path,
                remote_aliases: dict | None = None, local_aliases: dict | None = None,
-               archive_sizes: dict | None = None):
+               archive_sizes: dict | None = None, cover_manifest: dict | None = None):
     output.mkdir(parents=True, exist_ok=True)
     public_games = []
     local_files = (local or {}).get("files", {})
@@ -14,6 +14,7 @@ def build_site(catalog: dict, local: dict | None, remotes: dict | None, output: 
     remote_aliases = remote_aliases or {}
     local_aliases = local_aliases or {}
     archive_sizes = archive_sizes or {}
+    cover_games = (cover_manifest or {}).get("games", {})
     for game in catalog["games"]:
         item = dict(game)
         local_record = local_files.get(game["asset_id"], {
@@ -24,6 +25,15 @@ def build_site(catalog: dict, local: dict | None, remotes: dict | None, output: 
         })
         if "size" not in local_record and game["asset_id"] in archive_sizes:
             local_record["size"] = archive_sizes[game["asset_id"]]
+        size_bytes = local_record.get("size")
+        item["archive_size_bytes"] = size_bytes
+        item["archive_size_gib"] = round(size_bytes / (1024 ** 3), 2) if size_bytes is not None else None
+        item["covers"] = [{
+            "file": cover["file"],
+            "cover_id": cover.get("cover_id"),
+            "official": cover.get("official", False),
+            "rating": cover.get("rating", 0),
+        } for cover in cover_games.get(game["asset_id"], {}).get("covers", [])]
         item["local_status"] = local_record.get("status", "unknown")
         item["providers"] = {}
         item["download_urls"] = {}

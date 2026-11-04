@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Katalog českých Xbox 360 titulů a stav archivních kopií.">
+  <meta name="description" content="Pečlivě sestavený katalog her pro Xbox 360 s českou lokalizací, informacemi o obsahu a dostupností archivních kopií.">
   <title>X360 CZ archiv</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -12,11 +12,11 @@
     <div>
       <p class="eyebrow">Xbox 360 · český archiv</p>
       <h1>Katalog her</h1>
-      <p class="lede">Kurátorovaný přehled českých lokalizací, metadat a dostupnosti archivních kopií.</p>
+      <p class="lede">Pečlivě sestavený katalog her pro Xbox 360 s českou lokalizací, podrobnými informacemi o obsahu a aktuální dostupností archivních kopií.</p>
     </div>
     <div class="summary" aria-live="polite">
       <div><strong id="total-count">—</strong><span>her v katalogu</span></div>
-      <div><strong id="shown-count">—</strong><span>zobrazeno</span></div>
+      <div><strong id="shown-count">—</strong><span>odpovídá filtrům</span></div>
       <div><strong id="missing-count">—</strong><span>chybí na Webshare</span></div>
     </div>
   </header>
@@ -74,6 +74,10 @@
         </select>
       </label>
       <label>
+        <span>Věkové hodnocení</span>
+        <select id="pegi-filter"><option value="all">Všechna PEGI</option></select>
+      </label>
+      <label>
         <span>Řazení</span>
         <select id="sort-filter">
           <option value="title-asc">Název A–Z</option>
@@ -90,6 +94,7 @@
     <div class="catalog-results">
     <p id="load-error" class="error" hidden></p>
     <section id="games" class="games" aria-live="polite"></section>
+    <button id="load-more" class="load-more" type="button" hidden></button>
     <p id="empty" class="empty" hidden>Žádná hra neodpovídá zvoleným filtrům.</p>
     </div>
     </div>
@@ -98,6 +103,17 @@
   <footer class="site-footer">
     <p>Obaly pocházejí z komunitního archivu <a href="https://github.com/UncreativeXenon/XboxUnity-Scraper" target="_blank" rel="noopener noreferrer">XboxUnity-Scraper</a>. Práva k obrazovým materiálům náleží jejich vlastníkům.</p>
   </footer>
+
+  <dialog id="package-dialog" class="package-dialog" aria-labelledby="package-dialog-title">
+    <div class="dialog-heading">
+      <div>
+        <p class="eyebrow">Obsah balíčku</p>
+        <h2 id="package-dialog-title"></h2>
+      </div>
+      <button id="package-dialog-close" class="dialog-close" type="button" aria-label="Zavřít">×</button>
+    </div>
+    <div id="package-dialog-content" class="dialog-content"></div>
+  </dialog>
 
   <template id="game-template">
     <article class="game-card">
@@ -125,6 +141,7 @@
       <dl class="facts">
         <div><dt>Rok</dt><dd class="year"></dd></div>
         <div><dt>Hodnocení</dt><dd class="rating"></dd></div>
+        <div><dt>Věkové hodnocení</dt><dd class="pegi"></dd></div>
         <div><dt>Vývojář</dt><dd class="developer"></dd></div>
         <div><dt>Čeština</dt><dd class="language"></dd></div>
         <div><dt>Velikost</dt><dd class="size"></dd></div>
@@ -132,14 +149,12 @@
         <div><dt>Title Update</dt><dd class="title-update"></dd></div>
       </dl>
       <div class="package-details">
-        <details class="package-row dlc-row" hidden>
-          <summary><span>DLC v balíčku</span><span class="dlc-count"></span></summary>
-          <ul class="dlc-list"></ul>
-        </details>
-        <details class="package-row note-row" hidden>
-          <summary><span>Poznámka</span></summary>
-          <p class="game-note"></p>
-        </details>
+        <button class="package-row dlc-row" type="button" hidden>
+          <span>DLC v balíčku</span><span class="package-action"><span class="dlc-count"></span><span aria-hidden="true">+</span></span>
+        </button>
+        <button class="package-row note-row" type="button" hidden>
+          <span>Poznámka</span><span class="package-action" aria-hidden="true">+</span>
+        </button>
       </div>
       <div class="tags"></div>
       <div class="providers"></div>

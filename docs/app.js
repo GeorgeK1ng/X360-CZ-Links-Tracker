@@ -1,4 +1,5 @@
-const state = { games: [], cards: new Map(), searchIndex: new Map() };
+const PAGE_SIZE = 24;
+const state = { games: [], cards: new Map(), searchIndex: new Map(), visibleLimit: PAGE_SIZE };
 
 const elements = {
   games: document.querySelector('#games'),
@@ -10,6 +11,7 @@ const elements = {
   year: document.querySelector('#year-filter'),
   format: document.querySelector('#format-filter'),
   rating: document.querySelector('#rating-filter'),
+  pegi: document.querySelector('#pegi-filter'),
   sort: document.querySelector('#sort-filter'),
   reset: document.querySelector('#reset-filters'),
   total: document.querySelector('#total-count'),
@@ -17,42 +19,14 @@ const elements = {
   missing: document.querySelector('#missing-count'),
   empty: document.querySelector('#empty'),
   error: document.querySelector('#load-error'),
+  loadMore: document.querySelector('#load-more'),
+  dialog: document.querySelector('#package-dialog'),
+  dialogTitle: document.querySelector('#package-dialog-title'),
+  dialogContent: document.querySelector('#package-dialog-content'),
+  dialogClose: document.querySelector('#package-dialog-close'),
 };
 
 const collator = new Intl.Collator('cs', { sensitivity: 'base', numeric: true });
-let alignmentFrame;
-
-function alignCardSections() {
-  cancelAnimationFrame(alignmentFrame);
-  alignmentFrame = requestAnimationFrame(() => {
-    const cards = [...elements.games.querySelectorAll('.game-card')];
-    const selectors = ['.card-heading', '.description', '.facts'];
-
-    for (const card of cards) {
-      for (const selector of selectors) card.querySelector(selector).style.minHeight = '';
-    }
-    if (cards.length < 2 || window.matchMedia('(max-width: 760px)').matches) return;
-
-    const rows = [];
-    for (const card of cards) {
-      const top = Math.round(card.offsetTop);
-      let row = rows.find(item => Math.abs(item.top - top) <= 2);
-      if (!row) {
-        row = { top, cards: [] };
-        rows.push(row);
-      }
-      row.cards.push(card);
-    }
-
-    for (const row of rows) {
-      for (const selector of selectors) {
-        const sections = row.cards.map(card => card.querySelector(selector));
-        const height = Math.max(...sections.map(section => section.getBoundingClientRect().height));
-        for (const section of sections) section.style.minHeight = `${Math.ceil(height)}px`;
-      }
-    }
-  });
-}
 
 function normalized(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('cs');
@@ -77,16 +51,16 @@ function primaryStatus(game) {
   return game.providers?.webshare || Object.values(game.providers || {})[0] || game.local_status || 'unknown';
 }
 
-function matches(game) {
-  const query = normalized(elements.search.value.trim());
-  if (query && !state.searchIndex.get(game.asset_id).includes(query)) return false;
-  if (elements.language.value === 'audio' && !game.audio_cs) return false;
-  if (elements.language.value === 'subtitles' && !game.subtitles_cs) return false;
-  if (elements.status.value !== 'all' && primaryStatus(game) !== elements.status.value) return false;
-  if (elements.genre.value !== 'all' && !(game.categories || []).includes(elements.genre.value)) return false;
-  if (elements.year.value !== 'all' && String(game.release_year) !== elements.year.value) return false;
-  if (elements.format.value !== 'all' && game.format !== elements.format.value) return false;
-  if (Number(elements.rating.value) && Number(game.rating || 0) < Number(elements.rating.value)) return false;
+function matches(game, filters) {
+  if (filters.query && !state.searchIndex.get(game.asset_id).includes(filters.query)) return false;
+  if (filters.language === 'audio' && !game.audio_cs) return false;
+  if (filters.language === 'subtitles' && !game.subtitles_cs) return false;
+  if (filters.status !== 'all' && primaryStatus(game) !== filters.status) return false;
+  if (filters.genre !== 'all' && !(game.categories || []).includes(filters.genre)) return false;
+  if (filters.year !== 'all' && String(game.release_year) !== filters.year) return false;
+  if (filters.format !== 'all' && game.format !== filters.format) return false;
+  if (filters.rating && Number(game.rating || 0) < filters.rating) return false;
+  if (filters.pegi !== 'all' && String(game.pegi) !== filters.pegi) return false;
   return true;
 }
 
@@ -115,9 +89,16 @@ function populateFilters() {
   const genres = [...new Set(state.games.flatMap(game => game.categories || []))].sort(collator.compare);
   const years = [...new Set(state.games.map(game => game.release_year).filter(Boolean))].sort((a, b) => b - a);
   const formats = [...new Set(state.games.map(game => game.format).filter(Boolean))].sort(collator.compare);
+  const pegiRatings = [...new Set(state.games.map(game => game.pegi).filter(value => value != null))].sort((a, b) => a - b);
   addOptions(elements.genre, genres);
   addOptions(elements.year, years);
   addOptions(elements.format, formats);
+  for (const value of pegiRatings) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = `PEGI ${value}`;
+    elements.pegi.append(option);
+  }
 }
 
 function setupGallery(card, game) {
@@ -165,21 +146,34 @@ function setupPackageDetails(card, game) {
   if (dlc.length) {
     dlcRow.hidden = false;
     card.querySelector('.dlc-count').textContent = dlc.length.toLocaleString('cs-CZ');
-    const list = card.querySelector('.dlc-list');
-    for (const name of dlc) {
-      const item = document.createElement('li');
-      item.textContent = name;
-      list.append(item);
-    }
+    dlcRow.addEventListener('click', () => openPackageDialog(`${game.title} — DLC`, dlc));
   }
 
   const note = String(game.note || '').trim();
   const noteRow = card.querySelector('.note-row');
   if (note) {
     noteRow.hidden = false;
-    card.querySelector('.game-note').textContent = note;
+    noteRow.addEventListener('click', () => openPackageDialog(`${game.title} — poznámka`, note));
   }
-  card.querySelector('.package-details').hidden = !dlc.length && !note;
+}
+
+function openPackageDialog(title, content) {
+  elements.dialogTitle.textContent = title;
+  elements.dialogContent.replaceChildren();
+  if (Array.isArray(content)) {
+    const list = document.createElement('ul');
+    for (const value of content) {
+      const item = document.createElement('li');
+      item.textContent = value;
+      list.append(item);
+    }
+    elements.dialogContent.append(list);
+  } else {
+    const paragraph = document.createElement('p');
+    paragraph.textContent = content;
+    elements.dialogContent.append(paragraph);
+  }
+  elements.dialog.showModal();
 }
 
 function createGameCard(game) {
@@ -188,7 +182,8 @@ function createGameCard(game) {
     card.querySelector('.game-title').textContent = game.title;
     card.querySelector('.description').textContent = game.description_cs || 'Popis zatím není k dispozici.';
     card.querySelector('.year').textContent = game.release_year || '—';
-    card.querySelector('.rating').textContent = game.rating != null ? `${game.rating}/100` : '—';
+    card.querySelector('.rating').textContent = game.rating != null ? `${game.rating}/100 · ${game.rating} %` : '—';
+    card.querySelector('.pegi').textContent = game.pegi != null ? `PEGI ${game.pegi}` : '—';
     card.querySelector('.developer').textContent = game.developer || '—';
     card.querySelector('.language').textContent = languageText(game);
     card.querySelector('.size').textContent = game.archive_size_gib != null ? `${game.archive_size_gib.toLocaleString('cs-CZ')} GiB` : '—';
@@ -224,49 +219,65 @@ function createGameCard(game) {
     return card;
 }
 
-function prepareCards() {
-  const fragment = document.createDocumentFragment();
-  for (const game of state.games) {
-    const card = createGameCard(game);
-    state.cards.set(game.asset_id, card);
-    fragment.append(card);
-  }
-  elements.games.replaceChildren(fragment);
+function cardFor(game) {
+  if (!state.cards.has(game.asset_id)) state.cards.set(game.asset_id, createGameCard(game));
+  return state.cards.get(game.asset_id);
 }
 
 function render() {
-  const games = sortGames(state.games.filter(matches));
+  const filters = {
+    query: normalized(elements.search.value.trim()),
+    language: elements.language.value,
+    status: elements.status.value,
+    genre: elements.genre.value,
+    year: elements.year.value,
+    format: elements.format.value,
+    rating: Number(elements.rating.value),
+    pegi: elements.pegi.value,
+  };
+  const matchesAll = sortGames(state.games.filter(game => matches(game, filters)));
+  const visibleGames = matchesAll.slice(0, state.visibleLimit);
   const fragment = document.createDocumentFragment();
-  for (const game of games) fragment.append(state.cards.get(game.asset_id));
+  for (const game of visibleGames) fragment.append(cardFor(game));
   elements.games.replaceChildren(fragment);
-  alignCardSections();
   elements.total.textContent = state.games.length;
-  elements.shown.textContent = games.length;
+  elements.shown.textContent = matchesAll.length;
   elements.missing.textContent = state.games.filter(game => game.providers?.webshare === 'missing').length;
-  elements.empty.hidden = games.length !== 0;
+  elements.empty.hidden = matchesAll.length !== 0;
+  elements.loadMore.hidden = visibleGames.length >= matchesAll.length;
+  elements.loadMore.textContent = `Zobrazit další · ${visibleGames.length} z ${matchesAll.length}`;
 }
 
-window.addEventListener('resize', alignCardSections);
-
-let renderFrame;
-function scheduleRender() {
-  cancelAnimationFrame(renderFrame);
-  renderFrame = requestAnimationFrame(render);
+elements.search.addEventListener('input', () => {
+  state.visibleLimit = PAGE_SIZE;
+  render();
+});
+for (const control of [elements.language, elements.status, elements.genre,
+  elements.year, elements.format, elements.rating, elements.pegi, elements.sort]) {
+  control.addEventListener('change', () => {
+    state.visibleLimit = PAGE_SIZE;
+    render();
+  });
 }
 
-for (const control of [elements.search, elements.language, elements.status, elements.genre,
-  elements.year, elements.format, elements.rating, elements.sort]) {
-  control.addEventListener('input', scheduleRender);
-}
+elements.loadMore.addEventListener('click', () => {
+  state.visibleLimit += PAGE_SIZE;
+  render();
+});
+
+elements.dialogClose.addEventListener('click', () => elements.dialog.close());
+elements.dialog.addEventListener('click', event => {
+  if (event.target === elements.dialog) elements.dialog.close();
+});
 
 elements.reset.addEventListener('click', () => {
   elements.search.value = '';
-  for (const control of [elements.language, elements.status, elements.genre, elements.year, elements.format]) {
+  for (const control of [elements.language, elements.status, elements.genre, elements.year, elements.format, elements.pegi]) {
     control.value = 'all';
   }
   elements.rating.value = '0';
   elements.sort.value = 'title-asc';
-  elements.search.focus();
+  state.visibleLimit = PAGE_SIZE;
   render();
 });
 
@@ -279,7 +290,6 @@ fetch('data/games.json', { cache: 'no-store' })
     state.games = data.games || [];
     state.searchIndex = new Map(state.games.map(game => [game.asset_id, normalized(searchable(game))]));
     populateFilters();
-    prepareCards();
     render();
   })
   .catch(error => {

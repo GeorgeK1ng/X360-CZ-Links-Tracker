@@ -1,0 +1,33 @@
+{
+  "catalog": "catalog/games.json",
+  "aliases": "catalog/local-aliases.json",
+  "remote_aliases": "catalog/remote-aliases.json",
+  "archive_sizes": "catalog/archive-sizes.json",
+  "local_roots": [
+    "E:\\_Multimedia 2\\_New"
+  ],
+  "state_dir": ".archive-state",
+  "replicas_required": 2,
+  "providers": {
+    "webshare": {
+      "enabled": true,
+      "folder_path": "/XBOX360CZ",
+      "public_folder_id": "QFWv3mjitp",
+      "private": 0,
+      "upload_enabled": false
+    },
+    "edisk": {
+      "enabled": false,
+      "host": "ftp.edisk.cz",
+      "port": 21,
+      "remote_dir": "/XBOX360CZ",
+      "tls": false
+    },
+    "fastshare": {
+      "enabled": false
+    },
+    "sdilej": {
+      "enabled": false
+    }
+  }
+}

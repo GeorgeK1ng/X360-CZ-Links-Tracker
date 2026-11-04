@@ -1,0 +1,17 @@
+{
+  "catalog": "catalog/games.json",
+  "aliases": "catalog/local-aliases.json",
+  "remote_aliases": "catalog/remote-aliases.json",
+  "archive_sizes": "catalog/archive-sizes.json",
+  "local_roots": [],
+  "state_dir": ".archive-state-ci",
+  "replicas_required": 1,
+  "providers": {
+    "webshare": {
+      "enabled": true,
+      "folder_path": "",
+      "public_folder_id": "QFWv3mjitp",
+      "upload_enabled": false
+    }
+  }
+}

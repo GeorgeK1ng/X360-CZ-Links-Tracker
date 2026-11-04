@@ -14,8 +14,8 @@ on:
         description: 'Poznámka (při změně stavu nahradí původní)'
         required: false
         type: string
-  schedule:
-    - cron: '0 5 * * *'
+# Původní veřejný scanner je ponechán pouze pro ruční diagnostiku.
+# Pro úplný katalog a přihlášený scan používejte archive_tool.py lokálně.
 permissions:
   contents: write
 concurrency:

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Katalog českých Xbox 360 titulů a stav archivních kopií.">
+  <title>X360 CZ archiv</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">Xbox 360 · český archiv</p>
+      <h1>Katalog her</h1>
+      <p class="lede">Přehled češtiny, metadat a dostupnosti archivních kopií.</p>
+    </div>
+    <div class="summary" aria-live="polite">
+      <div><strong id="total-count">—</strong><span>her v katalogu</span></div>
+      <div><strong id="shown-count">—</strong><span>zobrazeno</span></div>
+      <div><strong id="missing-count">—</strong><span>chybí na Webshare</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section class="controls" aria-label="Filtrování katalogu">
+      <label class="search">
+        <span>Hledat</span>
+        <input id="search" type="search" placeholder="Název, vývojář, Title ID…" autocomplete="off">
+      </label>
+      <label>
+        <span>Čeština</span>
+        <select id="language-filter">
+          <option value="all">Všechny hry</option>
+          <option value="audio">Český dabing</option>
+          <option value="subtitles">České titulky</option>
+        </select>
+      </label>
+      <label>
+        <span>Webshare</span>
+        <select id="status-filter">
+          <option value="all">Všechny stavy</option>
+          <option value="healthy">Nalezeno</option>
+          <option value="missing">Chybí</option>
+          <option value="error">Chyba kontroly</option>
+        </select>
+      </label>
+      <label>
+        <span>Žánr</span>
+        <select id="genre-filter"><option value="all">Všechny žánry</option></select>
+      </label>
+      <label>
+        <span>Rok vydání</span>
+        <select id="year-filter"><option value="all">Všechny roky</option></select>
+      </label>
+      <label>
+        <span>Formát</span>
+        <select id="format-filter"><option value="all">Všechny formáty</option></select>
+      </label>
+      <label>
+        <span>Minimální hodnocení</span>
+        <select id="rating-filter">
+          <option value="0">Bez omezení</option>
+          <option value="50">50 a více</option>
+          <option value="60">60 a více</option>
+          <option value="70">70 a více</option>
+          <option value="80">80 a více</option>
+          <option value="90">90 a více</option>
+        </select>
+      </label>
+      <label>
+        <span>Řazení</span>
+        <select id="sort-filter">
+          <option value="title-asc">Název A–Z</option>
+          <option value="title-desc">Název Z–A</option>
+          <option value="year-desc">Nejnovější</option>
+          <option value="year-asc">Nejstarší</option>
+          <option value="rating-desc">Nejlépe hodnocené</option>
+        </select>
+      </label>
+      <button id="reset-filters" type="button">Zrušit filtry</button>
+    </section>
+
+    <p id="load-error" class="error" hidden></p>
+    <section id="games" class="games" aria-live="polite"></section>
+    <p id="empty" class="empty" hidden>Žádná hra neodpovídá zvoleným filtrům.</p>
+  </main>
+
+  <template id="game-template">
+    <article class="game-card">
+      <div class="card-heading">
+        <div>
+          <p class="game-id"></p>
+          <h2 class="game-title"></h2>
+        </div>
+        <span class="status"></span>
+      </div>
+      <p class="description"></p>
+      <dl class="facts">
+        <div><dt>Rok</dt><dd class="year"></dd></div>
+        <div><dt>Hodnocení</dt><dd class="rating"></dd></div>
+        <div><dt>Vývojář</dt><dd class="developer"></dd></div>
+        <div><dt>Čeština</dt><dd class="language"></dd></div>
+      </dl>
+      <div class="tags"></div>
+      <div class="providers"></div>
+      <div class="downloads"></div>
+    </article>
+  </template>
+  <script src="app.js" defer></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-const state = { games: [] };
+const state = { games: [], cards: new Map(), searchIndex: new Map() };
 
 const elements = {
   games: document.querySelector('#games'),
@@ -20,6 +20,39 @@ const elements = {
 };
 
 const collator = new Intl.Collator('cs', { sensitivity: 'base', numeric: true });
+let alignmentFrame;
+
+function alignCardSections() {
+  cancelAnimationFrame(alignmentFrame);
+  alignmentFrame = requestAnimationFrame(() => {
+    const cards = [...elements.games.querySelectorAll('.game-card')];
+    const selectors = ['.card-heading', '.description', '.facts'];
+
+    for (const card of cards) {
+      for (const selector of selectors) card.querySelector(selector).style.minHeight = '';
+    }
+    if (cards.length < 2 || window.matchMedia('(max-width: 760px)').matches) return;
+
+    const rows = [];
+    for (const card of cards) {
+      const top = Math.round(card.offsetTop);
+      let row = rows.find(item => Math.abs(item.top - top) <= 2);
+      if (!row) {
+        row = { top, cards: [] };
+        rows.push(row);
+      }
+      row.cards.push(card);
+    }
+
+    for (const row of rows) {
+      for (const selector of selectors) {
+        const sections = row.cards.map(card => card.querySelector(selector));
+        const height = Math.max(...sections.map(section => section.getBoundingClientRect().height));
+        for (const section of sections) section.style.minHeight = `${Math.ceil(height)}px`;
+      }
+    }
+  });
+}
 
 function normalized(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('cs');
@@ -46,7 +79,7 @@ function primaryStatus(game) {
 
 function matches(game) {
   const query = normalized(elements.search.value.trim());
-  if (query && !normalized(searchable(game)).includes(query)) return false;
+  if (query && !state.searchIndex.get(game.asset_id).includes(query)) return false;
   if (elements.language.value === 'audio' && !game.audio_cs) return false;
   if (elements.language.value === 'subtitles' && !game.subtitles_cs) return false;
   if (elements.status.value !== 'all' && primaryStatus(game) !== elements.status.value) return false;
@@ -149,12 +182,8 @@ function setupPackageDetails(card, game) {
   card.querySelector('.package-details').hidden = !dlc.length && !note;
 }
 
-function render() {
-  const games = sortGames(state.games.filter(matches));
-  elements.games.replaceChildren();
-  const fragment = document.createDocumentFragment();
-  for (const game of games) {
-    const card = elements.template.content.cloneNode(true);
+function createGameCard(game) {
+    const card = elements.template.content.firstElementChild.cloneNode(true);
     card.querySelector('.game-id').textContent = game.title_id;
     card.querySelector('.game-title').textContent = game.title;
     card.querySelector('.description').textContent = game.description_cs || 'Popis zatím není k dispozici.';
@@ -192,18 +221,42 @@ function render() {
       link.setAttribute('aria-label', `Stáhnout ${game.title} z ${name}`);
       downloads.append(link);
     }
+    return card;
+}
+
+function prepareCards() {
+  const fragment = document.createDocumentFragment();
+  for (const game of state.games) {
+    const card = createGameCard(game);
+    state.cards.set(game.asset_id, card);
     fragment.append(card);
   }
-  elements.games.append(fragment);
+  elements.games.replaceChildren(fragment);
+}
+
+function render() {
+  const games = sortGames(state.games.filter(matches));
+  const fragment = document.createDocumentFragment();
+  for (const game of games) fragment.append(state.cards.get(game.asset_id));
+  elements.games.replaceChildren(fragment);
+  alignCardSections();
   elements.total.textContent = state.games.length;
   elements.shown.textContent = games.length;
   elements.missing.textContent = state.games.filter(game => game.providers?.webshare === 'missing').length;
   elements.empty.hidden = games.length !== 0;
 }
 
+window.addEventListener('resize', alignCardSections);
+
+let renderFrame;
+function scheduleRender() {
+  cancelAnimationFrame(renderFrame);
+  renderFrame = requestAnimationFrame(render);
+}
+
 for (const control of [elements.search, elements.language, elements.status, elements.genre,
   elements.year, elements.format, elements.rating, elements.sort]) {
-  control.addEventListener('input', render);
+  control.addEventListener('input', scheduleRender);
 }
 
 elements.reset.addEventListener('click', () => {
@@ -217,12 +270,18 @@ elements.reset.addEventListener('click', () => {
   render();
 });
 
-fetch('data/games.json')
+fetch('data/games.json', { cache: 'no-store' })
   .then(response => {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   })
-  .then(data => { state.games = data.games || []; populateFilters(); render(); })
+  .then(data => {
+    state.games = data.games || [];
+    state.searchIndex = new Map(state.games.map(game => [game.asset_id, normalized(searchable(game))]));
+    populateFilters();
+    prepareCards();
+    render();
+  })
   .catch(error => {
     elements.error.hidden = false;
     elements.error.textContent = `Katalog se nepodařilo načíst: ${error.message}`;

@@ -82,12 +82,12 @@ dd { overflow: hidden; margin: 3px 0 0; font-size: .79rem; text-overflow: ellips
 .package-row + .package-row { margin-top: 7px; }
 .package-action { display: flex; min-width: 21px; height: 21px; align-items: center; justify-content: center; gap: 6px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; font-size: .78rem; font-variant-numeric: tabular-nums; }
 .package-action:has(.dlc-count) { padding: 0 6px; }
-.package-dialog { width: min(480px, calc(100% - 28px)); max-height: min(620px, calc(100vh - 40px)); padding: 0; color: var(--text); background: var(--panel-2); border: 1px solid #435649; border-radius: 14px; box-shadow: 0 30px 90px rgba(0,0,0,.7); }
+.package-dialog { width: min(480px, calc(100% - 28px)); max-height: min(620px, calc(100vh - 40px)); overflow-y: auto; padding: 0; color: var(--text); background: var(--panel-2); border: 1px solid #435649; border-radius: 14px; box-shadow: 0 30px 90px rgba(0,0,0,.7); scrollbar-width: thin; scrollbar-color: #657169 transparent; }
 .package-dialog::backdrop { background: rgba(0,0,0,.72); backdrop-filter: blur(3px); }
-.dialog-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; padding: 20px; border-bottom: 1px solid var(--line); }
+.dialog-heading { position: sticky; z-index: 2; top: 0; display: flex; align-items: start; justify-content: space-between; gap: 18px; padding: 20px; background: var(--panel-2); border-bottom: 1px solid var(--line); }
 .dialog-heading h2 { margin: 0; font-size: 1.15rem; line-height: 1.3; }
 .dialog-close { width: 36px; height: 36px; flex: none; padding: 0; font-size: 1.35rem; line-height: 1; }
-.dialog-content { overflow-y: auto; padding: 20px; color: #cbd5cd; font-size: .88rem; line-height: 1.6; }
+.dialog-content { overflow: visible; padding: 20px; color: #cbd5cd; font-size: .88rem; line-height: 1.6; }
 .dialog-content p, .dialog-content ul { margin: 0; }
 .dialog-content ul { display: grid; gap: 8px; padding-left: 20px; }
 .legal-dialog { width: min(680px, calc(100% - 28px)); }
@@ -108,7 +108,7 @@ dd { overflow: hidden; margin: 3px 0 0; font-size: .79rem; text-overflow: ellips
 .download-confirmation .primary-action:hover:not(:disabled) { background: #a2e52a; }
 .download-confirmation .primary-action:disabled { color: var(--muted); background: var(--panel); border-color: var(--line); cursor: not-allowed; opacity: .65; }
 .guide-dialog { width: min(760px, calc(100% - 28px)); }
-.guide-content { max-height: min(720px, calc(100vh - 130px)); }
+.guide-content { max-height: none; }
 .guide-article { display: grid; gap: 15px; }
 .guide-article p, .guide-article ul, .guide-article ol, .guide-article figure { margin: 0; }
 .guide-article h3 { margin: 3px 0 -5px; color: var(--text); font-size: .88rem; }

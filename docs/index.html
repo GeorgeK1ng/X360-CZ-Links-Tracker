@@ -96,6 +96,18 @@
       </label>
       <button id="reset-filters" type="button">Zrušit filtry</button>
     </section>
+    <section class="console-guide" aria-labelledby="console-guide-title">
+      <p class="eyebrow">Než začnete</p>
+      <h2 id="console-guide-title">Jak hry spustit</h2>
+      <div class="method-copy">
+        <p>Tyto verze vyžadují upravený Xbox 360. <button class="guide-opener method-link" type="button" data-guide="jtag">JTAG</button> je historická trvalá úprava pro nejstarší konzole, zatímco <button class="guide-opener method-link" type="button" data-guide="rgh">RGH</button> je nejběžnější hardwarové řešení.</p>
+        <p>Bez pájení lze použít dočasné metody <button class="guide-opener method-link" type="button" data-guide="badupdate">BadUpdate</button> nebo <button class="guide-opener method-link" type="button" data-guide="badavatar">ABadAvatar</button>. <button class="guide-opener method-link" type="button" data-guide="peerpressure">Peer Pressure</button> je perzistentní softmod pro podporované konzole. Kliknutím na název zobrazíte podrobnosti.</p>
+      </div>
+      <button class="guide-opener aurora-guide-card" type="button" data-guide="install">
+        <img src="assets/aurora-dashboard.jpg" alt="Knihovna her v dashboardu Aurora" loading="lazy">
+        <span><strong>Aurora a instalace her</strong><small>Obrázkový návod přes FTP</small></span>
+      </button>
+    </section>
     </aside>
 
     <div class="catalog-results">
@@ -171,6 +183,97 @@
       <button id="download-continue" class="primary-action" type="button" disabled>Potvrdit a přejít ke stažení</button>
     </div>
   </dialog>
+
+  <dialog id="guide-dialog" class="package-dialog guide-dialog" aria-labelledby="guide-dialog-title">
+    <div class="dialog-heading">
+      <div>
+        <p class="eyebrow">Xbox 360 · praktický průvodce</p>
+        <h2 id="guide-dialog-title"></h2>
+      </div>
+      <button id="guide-dialog-close" class="dialog-close" type="button" aria-label="Zavřít">×</button>
+    </div>
+    <div id="guide-dialog-content" class="dialog-content guide-content"></div>
+  </dialog>
+
+  <template id="guide-jtag">
+    <div class="guide-article">
+      <p class="guide-lead"><strong>JTAG</strong> je trvalá hardwarová úprava pro rané „phat“ konzole. Dnes je spíše historickou možností, protože funguje jen na velmi starém systémovém softwaru.</p>
+      <div class="guide-facts"><span>Trvalá úprava</span><span>Nutné pájení</span><span>Jen phat</span></div>
+      <h3>Co je potřeba</h3>
+      <ul><li>Xbox 360 phat s dashboardem 2.0.7371 nebo starším a neopraveným CB.</li><li>NAND programátor, vodiče a vybavení pro přesné pájení.</li><li>Záloha NAND a ověření, že konkrétní deska je skutečně JTAG kompatibilní.</li></ul>
+      <div class="guide-warning"><strong>Nedowngradujte aktualizovanou konzoli.</strong> Vyšší dashboard JTAG znovu nezpřístupní. Nezkušené pájení může konzoli trvale poškodit.</div>
+      <p><a class="source-link" href="https://consolemods.org/wiki/Xbox_360:JTAG" target="_blank" rel="noopener noreferrer">Podrobný průvodce JTAG na ConsoleMods</a></p>
+    </div>
+  </template>
+
+  <template id="guide-rgh">
+    <div class="guide-article">
+      <p class="guide-lead"><strong>RGH – Reset Glitch Hack</strong> je nejběžnější trvalá fyzická úprava Xboxu 360. Umožňuje automaticky spouštět nepodepsaný software a vlastní dashboard, například Auroru.</p>
+      <div class="guide-facts"><span>Trvalá úprava</span><span>Nutné pájení</span><span>Závisí na desce</span></div>
+      <h3>Co je potřeba</h3>
+      <ul><li>Nejprve přesně určit revizi základní desky.</li><li>Vybrat správnou variantu RGH pro danou desku; zapojení není univerzální.</li><li>NAND programátor, kvalitní pájecí vybavení a bezpečně uložená záloha NAND/CPU klíče.</li></ul>
+      <div class="guide-warning">Winchester běžné RGH nepodporuje. Pokud si nejste jistí mikropájením, je bezpečnější využít zkušeného technika než zkoušet univerzální návod.</div>
+      <p><a class="source-link" href="https://consolemods.org/wiki/Xbox_360:Getting_Started" target="_blank" rel="noopener noreferrer">Výběr správné úpravy podle desky</a></p>
+    </div>
+  </template>
+
+  <template id="guide-badupdate">
+    <div class="guide-article">
+      <p class="guide-lead"><strong>BadUpdate</strong> je čistě softwarový a neperzistentní exploit pro dashboard 17559. Konzoli není nutné otevírat, ale exploit je po každém vypnutí nebo restartu nutné spustit znovu.</p>
+      <div class="guide-facts"><span>Bez pájení</span><span>Do restartu</span><span>Dashboard 17559</span></div>
+      <h3>Co je potřeba</h3>
+      <ul><li>USB flash disk naformátovaný na FAT32.</li><li>Podporovaná hra – aktuální větev používá Rock Band Blitz, trial nebo plnou verzi.</li><li>Oficiální balíček BadUpdate a kompatibilní payload, například prostředí s Aurorou.</li></ul>
+      <p>Po úspěšném spuštění zůstane konzole upravená pouze do vypnutí. Pro další hraní je nutné exploit znovu aktivovat.</p>
+      <p><a class="source-link" href="https://github.com/grimdoomer/Xbox360BadUpdate" target="_blank" rel="noopener noreferrer">BadUpdate – původní repozitář a vydání</a></p>
+    </div>
+  </template>
+
+  <template id="guide-badavatar">
+    <div class="guide-article">
+      <p class="guide-lead"><strong>ABadAvatar</strong> navazuje na BadUpdate a používá softwarový řetězec pro spuštění nepodepsaného kódu. Také není perzistentní: po restartu nebo vypnutí je nutné exploit zopakovat.</p>
+      <div class="guide-facts"><span>Bez pájení</span><span>Do restartu</span><span>Experimentální</span></div>
+      <h3>Kdy dává smysl</h3>
+      <ul><li>Když nechcete konzoli otevírat nebo pájet.</li><li>Pro konzole, pro které není vhodný Peer Pressure; projekt uvádí i podporu Winchesteru.</li><li>Pro uživatele, kterým nevadí opakované spuštění po každém zapnutí.</li></ul>
+      <div class="guide-warning">Autor projekt označuje spíše jako proof of concept než plnou náhradu RGH. Repozitář je pouze pro čtení a před použitím je vhodné projít aktuální README a známé problémy.</div>
+      <p><a class="source-link" href="https://github.com/shutterbug2000/ABadAvatar" target="_blank" rel="noopener noreferrer">ABadAvatar – původní repozitář</a></p>
+    </div>
+  </template>
+
+  <template id="guide-peerpressure">
+    <div class="guide-article">
+      <p class="guide-lead"><strong>Peer Pressure</strong> je perzistentní softmod: po instalaci se upravený režim aktivuje už při startu konzole. Mění NAND i bezpečnostní sektory pevného disku, proto je systémová záloha zásadní.</p>
+      <div class="guide-facts"><span>Bez pájení</span><span>Trvalý</span><span>Ne pro Corona/Winchester</span></div>
+      <h3>Co je potřeba</h3>
+      <ul><li>Kompatibilní deska: Xenon, Zephyr, Falcon, Jasper nebo Trinity.</li><li>Mechanický 2,5″ SATA disk; SSD může být kvůli časování nespolehlivé.</li><li>USB flash disk FAT32, Rock Band Blitz demo a aktuální SoftmodInstaller.</li><li>Před instalací vytvořit a bezpečně uložit zálohu NAND, CPU klíče a bezpečnostních sektorů HDD.</li></ul>
+      <div class="guide-warning">Peer Pressure aktuálně nepodporuje Corona ani Winchester a není kompatibilní s DashLaunch/DashLaunch pluginy. Postupujte výhradně podle aktuální dokumentace projektu.</div>
+      <p><a class="source-link" href="https://github.com/grimdoomer/Xbox360PeerPressure/wiki/Installation" target="_blank" rel="noopener noreferrer">Oficiální instalační průvodce Peer Pressure</a></p>
+    </div>
+  </template>
+
+  <template id="guide-install">
+    <div class="guide-article installation-article">
+      <figure class="aurora-figure">
+        <img src="assets/aurora-dashboard.jpg" alt="Ukázka knihovny her v dashboardu Aurora" loading="lazy">
+        <figcaption>Aurora – komunitní dashboard pro upravený Xbox 360. Snímek: <a href="https://xboxrepublika.com/t/upoznavanje-sa-aurora-dashboard-osnovne-komande-izgled-prebacivanje-igara-skidanje-covera-i-slicno/10277" target="_blank" rel="noopener noreferrer">XboxRepublika</a>.</figcaption>
+      </figure>
+      <div class="aurora-answer"><strong>Je Aurora povinná?</strong><p>Ne. Hru lze spustit i přes XeXMenu, Freestyle Dash nebo jiný kompatibilní správce. Aurora je ale doporučená, protože pohodlně spojuje knihovnu her, obaly, skenování složek, správu aktualizací a FTP. Celý tento návod proto používá právě ji.</p></div>
+      <p class="guide-lead">Potřebujete funkční JTAG, RGH, aktivní BadUpdate/ABadAvatar nebo Peer Pressure. Potom už stačí Aurora, domácí síť a chvíle na zkopírování souborů.</p>
+      <h3>1. Připravte Auroru a síť</h3>
+      <ol><li>Připojte Xbox 360 a počítač do stejné domácí sítě; kabel Ethernet bývá rychlejší a stabilnější.</li><li>Spusťte Auroru. IP adresu konzole najdete v systémových informacích po stisknutí tlačítka <strong>Back</strong>.</li><li>V FTP klientu zadejte IP konzole, port <code>21</code> a výchozí jméno i heslo <code>xboxftp</code>.</li></ol>
+      <h3>2. Rozpoznejte obsah archivu</h3>
+      <div class="path-grid">
+        <div><code>default.xex</code><strong>Extrahovaná hra</strong><span>Nahrajte celou složku například do <code>Hdd1:\Games\Název hry</code>.</span></div>
+        <div><code>Do Content</code><strong>GOD, XBLA, DLC nebo instalační data</strong><span>Otevřete složku <code>Do Content</code> a její obsah zkopírujte do <code>Hdd1:\Content</code>. Zachovejte všechny podsložky.</span></div>
+        <div><code>Do Cache</code><strong>Některé Title Updates</strong><span>Otevřete složku <code>Do Cache</code> a její obsah zkopírujte do <code>Hdd1:\Cache</code>.</span></div>
+      </div>
+      <div class="guide-warning"><strong>Složky „Do Content“ a „Do Cache“ jsou pouze pokyny.</strong> Do Xboxu se kopíruje jejich obsah, nikoli samotná obalová složka. Výsledkem má být například <code>Hdd1:\Content\0000000000000000\...</code>, nikdy <code>Hdd1:\Content\Do Content\...</code>.</div>
+      <h3>3. Přeneste a nechte Auroru hru najít</h3>
+      <ol><li>Přeneste soubory přes FTP a během kopírování konzoli nevypínejte.</li><li>V Auroře otevřete <strong>Start → Settings → Content → Scan Paths</strong>.</li><li>Přidejte cestu s extrahovanými hrami, například <code>Hdd1:\Games</code>, nastavte dostatečnou hloubku a spusťte scan.</li><li>Obsah v GOD/XBLA formátu uložený ve správné struktuře <code>Content</code> Aurora obvykle najde po novém scanu.</li></ol>
+      <h3>DLC a Title Updates</h3>
+      <ul><li>DLC patří typicky do <code>Content\0000000000000000\TITLE_ID\00000002</code>.</li><li>GOD hra používá obvykle <code>Content\0000000000000000\TITLE_ID\00007000</code>.</li><li>Title Update s názvem začínajícím malými písmeny <code>tu...</code> patří zpravidla do <code>Content\0000000000000000\TITLE_ID\000B0000</code>; soubory začínající <code>TU_...</code> bývají v <code>Hdd1:\Cache</code>.</li></ul>
+      <p class="guide-sources"><a class="source-link" href="https://consolemods.org/wiki/Xbox_360:Aurora" target="_blank" rel="noopener noreferrer">Aurora a FTP</a><a class="source-link" href="https://consolemods.org/wiki/Xbox_360:Playing_Game_Backups" target="_blank" rel="noopener noreferrer">Formáty a složky her</a><a class="source-link" href="https://consolemods.org/wiki/Xbox_360:Manually_Installing_Title_Updates" target="_blank" rel="noopener noreferrer">Title Updates</a></p>
+    </div>
+  </template>
 
   <template id="game-template">
     <article class="game-card">

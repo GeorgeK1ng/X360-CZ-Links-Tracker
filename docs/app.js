@@ -33,6 +33,11 @@ const elements = {
   downloadGame: document.querySelector('#download-game'),
   downloadConfirm: document.querySelector('#download-confirm'),
   downloadContinue: document.querySelector('#download-continue'),
+  guideDialog: document.querySelector('#guide-dialog'),
+  guideDialogTitle: document.querySelector('#guide-dialog-title'),
+  guideDialogContent: document.querySelector('#guide-dialog-content'),
+  guideDialogClose: document.querySelector('#guide-dialog-close'),
+  guideOpeners: document.querySelectorAll('.guide-opener'),
   dialog: document.querySelector('#package-dialog'),
   dialogTitle: document.querySelector('#package-dialog-title'),
   dialogContent: document.querySelector('#package-dialog-content'),
@@ -354,6 +359,31 @@ elements.downloadContinue.addEventListener('click', () => {
   const target = pendingDownloadUrl;
   closeDownloadDialog();
   window.open(target, '_blank', 'noopener,noreferrer');
+});
+
+const guideTitles = {
+  jtag: 'JTAG',
+  rgh: 'RGH – Reset Glitch Hack',
+  badupdate: 'BadUpdate',
+  badavatar: 'ABadAvatar',
+  peerpressure: 'Peer Pressure',
+  install: 'Instalace her přes Auroru a FTP',
+};
+
+for (const opener of elements.guideOpeners) {
+  opener.addEventListener('click', () => {
+    const guide = opener.dataset.guide;
+    const template = document.querySelector(`#guide-${guide}`);
+    if (!template) return;
+    elements.guideDialogTitle.textContent = guideTitles[guide] || 'Průvodce';
+    elements.guideDialogContent.replaceChildren(template.content.cloneNode(true));
+    elements.guideDialog.showModal();
+  });
+}
+
+elements.guideDialogClose.addEventListener('click', () => elements.guideDialog.close());
+elements.guideDialog.addEventListener('click', event => {
+  if (event.target === elements.guideDialog) elements.guideDialog.close();
 });
 
 elements.dialogClose.addEventListener('click', () => elements.dialog.close());

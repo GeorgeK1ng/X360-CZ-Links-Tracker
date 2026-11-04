@@ -22,6 +22,13 @@
   </header>
 
   <main>
+    <aside class="legal-notice" aria-label="Právní upozornění">
+      <div>
+        <strong>Pouze pro oprávněné uživatele</strong>
+        <p>Archivní kopie jsou určeny výhradně k užití, ke kterému máte potřebná práva. Označení „záložní kopie“ ani nedostupnost hry v prodeji samo o sobě nezakládá právo obsah stáhnout nebo šířit.</p>
+      </div>
+      <button class="open-legal" type="button">Podmínky použití</button>
+    </aside>
     <div class="catalog-layout">
     <aside class="filter-sidebar" aria-label="Filtrování katalogu">
       <div class="filter-heading">
@@ -94,7 +101,14 @@
     <div class="catalog-results">
     <p id="load-error" class="error" hidden></p>
     <section id="games" class="games" aria-live="polite"></section>
-    <button id="load-more" class="load-more" type="button" hidden></button>
+    <div id="load-controls" class="load-controls" hidden>
+      <p id="load-count" class="load-count" aria-live="polite"></p>
+      <div class="load-actions">
+        <button id="load-more" type="button">Zobrazit dalších 24</button>
+        <button id="show-100" type="button">Zobrazit 100</button>
+        <button id="show-all" class="show-all" type="button">Zobrazit vše</button>
+      </div>
+    </div>
     <p id="empty" class="empty" hidden>Žádná hra neodpovídá zvoleným filtrům.</p>
     </div>
     </div>
@@ -102,7 +116,32 @@
 
   <footer class="site-footer">
     <p>Obaly pocházejí z komunitního archivu <a href="https://github.com/UncreativeXenon/XboxUnity-Scraper" target="_blank" rel="noopener noreferrer">XboxUnity-Scraper</a>. Práva k obrazovým materiálům náleží jejich vlastníkům.</p>
+    <p>Tento nekomerční komunitní katalog není spojen se společnostmi Microsoft ani s vydavateli uvedených her. Ochranné známky a autorská práva náleží příslušným vlastníkům. <button class="text-button open-legal" type="button">Právní upozornění a podmínky použití</button></p>
   </footer>
+
+  <dialog id="legal-dialog" class="package-dialog legal-dialog" aria-labelledby="legal-dialog-title">
+    <div class="dialog-heading">
+      <div>
+        <p class="eyebrow">Podmínky použití</p>
+        <h2 id="legal-dialog-title">Právní upozornění</h2>
+      </div>
+    </div>
+    <div class="dialog-content legal-content">
+      <p><strong>Tento katalog je informační a archivní komunitní projekt.</strong> Není prohlášením, že uvedené hry, překlady, úpravy nebo jejich kopie jsou volně šiřitelné.</p>
+      <ul>
+        <li>Soubory smíte použít pouze tehdy, pokud jste oprávněným uživatelem příslušné hry a zamýšlené užití dovoluje licence i právní předpisy, které se na vás vztahují.</li>
+        <li>Záložní kopie může být dovolena jen za konkrétních podmínek. Samotné vlastnictví nosiče, stáří hry, označení „abandonware“ ani její nedostupnost v obchodě automaticky neopravňují ke stažení z cizího zdroje nebo k dalšímu šíření.</li>
+        <li>České překlady, dabing, DLC, obaly a další součásti mohou mít vlastní nositele práv. Uživatel odpovídá za to, že má právo je použít.</li>
+        <li>Projekt není určen k obcházení technických ochran, licenčních podmínek, oprávněných odstranění obsahu ani práv třetích osob.</li>
+      </ul>
+      <p>Pokud jste nositelem práv a domníváte se, že katalog odkazuje na neoprávněný obsah, oznamte konkrétní položku prostřednictvím <a href="https://github.com/GeorgeK1ng/X360-CZ-Links-Tracker/issues" target="_blank" rel="noopener noreferrer">GitHub Issues</a>, aby mohla být prověřena.</p>
+      <p class="legal-small">Toto upozornění není právní poradenství a nemění zákonná práva ani povinnosti.</p>
+      <div class="legal-actions">
+        <button id="legal-decline" type="button">Nesouhlasím</button>
+        <button id="legal-accept" class="primary-action" type="button">Rozumím a pokračovat</button>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="package-dialog" class="package-dialog" aria-labelledby="package-dialog-title">
     <div class="dialog-heading">
@@ -113,6 +152,25 @@
       <button id="package-dialog-close" class="dialog-close" type="button" aria-label="Zavřít">×</button>
     </div>
     <div id="package-dialog-content" class="dialog-content"></div>
+  </dialog>
+
+  <dialog id="download-dialog" class="package-dialog download-dialog" aria-labelledby="download-dialog-title">
+    <div class="dialog-heading">
+      <div>
+        <p class="eyebrow">Potvrzení před stažením</p>
+        <h2 id="download-dialog-title">Záložní kopie</h2>
+      </div>
+      <button id="download-dialog-close" class="dialog-close" type="button" aria-label="Zavřít">×</button>
+    </div>
+    <div class="dialog-content download-confirmation">
+      <p id="download-game"></p>
+      <p>Pokračujte pouze tehdy, pokud jste oprávněným uživatelem této hry. Toto potvrzení samo o sobě nezakládá žádné právo ke stažení.</p>
+      <label class="confirmation-check">
+        <input id="download-confirm" type="checkbox">
+        <span>Potvrzuji, že vlastním originální nosič nebo platnou licenci, kopii potřebuji pro vlastní nekomerční užití – například kvůli poškozenému či nečitelnému disku – a její získání i použití je v mém případě dovolené.</span>
+      </label>
+      <button id="download-continue" class="primary-action" type="button" disabled>Potvrdit a přejít ke stažení</button>
+    </div>
   </dialog>
 
   <template id="game-template">

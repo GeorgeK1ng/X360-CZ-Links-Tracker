@@ -1,24 +1,58 @@
 # X360 CZ Archive
 
-Katalog, scanner a obnova vzdálených kopií českého Xbox 360 archivu. Zdroj pravdy je `catalog/games.json`, nikoli obsah jednoho filehostingu. Lokální archivy se nepřejmenovávají ani nekopírují.
+Pečlivě sestavený katalog her pro Xbox 360 s českou lokalizací, informacemi o obsahu a aktuální dostupností archivních kopií.
 
-## Co projekt umí
+**Veřejný katalog:** [georgek1ng.github.io/X360-CZ-Links-Tracker](https://georgek1ng.github.io/X360-CZ-Links-Tracker/)
 
-- převést list `Games List` z Excelu na katalog JSON,
-- najít očekávané `.7z` archivy v lokálních adresářích,
-- řešit odlišné lokální názvy explicitními aliasy,
-- přihlášeně načíst vlastní soubory z Webshare,
-- načíst a nahrávat soubory na eDisk přes FTP,
-- porovnat katalog, lokální archiv a vzdálené repliky,
-- připravit bezpečný plán chybějících uploadů,
-- provést upload jen s `repair --apply` a ručním potvrzením,
-- publikovat prohledávatelný katalog přes GitHub Pages.
+Zdrojová databáze je vedena v Excelu `source/X360_CZ_GamesList_web_databaze.xlsx`. Katalog JSON a web se z ní automaticky generují. Lokální archivy se při kontrole ani uploadu nepřejmenovávají.
 
-FastShare a Sdílej jsou v konfiguraci rezervované, ale zůstávají vypnuté, dokud nebude ověřeno jejich podporované upload rozhraní.
+## Co projekt dělá
 
-## Instalace
+- vytváří webový katalog z listu `Games List` ve zdrojovém Excelu,
+- zobrazuje popisy, hodnocení, PEGI, žánry, češtinu, DLC, Title Update a obaly her,
+- kontroluje dostupnost archivních kopií na Webshare,
+- porovnává katalog s lokálními `.7z` archivy,
+- připraví a po potvrzení nahraje pouze chybějící soubory,
+- nahrává soubory pod jednoznačným technickým názvem, aniž by změnil jejich lokální název,
+- každý den automaticky aktualizuje stav katalogu pomocí GitHub Actions.
 
-Vyžaduje Python 3.11 nebo novější.
+Podpora dalších úložišť je připravená v konfiguraci, ale zatím není aktivní.
+
+## Přidání nebo úprava her
+
+1. Upravte `source/X360_CZ_GamesList_web_databaze.xlsx`, především list `Games List`.
+2. Změnu commitněte a pushněte do větve `main` pomocí GitHub Desktopu.
+3. GitHub Actions automaticky:
+   - převede Excel do katalogu,
+   - zkontroluje Webshare,
+   - stáhne dostupné obaly,
+   - spustí testy,
+   - aktualizuje veřejný web.
+
+Workflow lze spustit také ručně přes **GitHub → Actions → Denní kontrola a publikace katalogu → Run workflow**. Jinak se spouští automaticky každý den v 05:15 UTC a po změně zdrojových dat nebo scanneru.
+
+## Oprava chybějících souborů
+
+1. V GitHub Desktopu použijte **Fetch origin** a následně **Pull origin**, pokud je dostupný.
+2. Dvakrát klikněte na `SPUSTIT-UPDATER.bat`.
+3. Zadejte cestu ke složce s lokálními `.7z` archivy.
+4. Zadejte Webshare jméno nebo e-mail a heslo. Heslo se při psaní nezobrazuje a nikam se neukládá.
+5. Updater provede lokální i vzdálenou kontrolu a vypíše chybějící hry i jejich celkovou velikost.
+6. Upload začne až po napsání přesného potvrzení `UPLOAD`.
+
+Po dokončení lze počkat na další denní kontrolu, nebo workflow spustit ručně. Web se potom aktualizuje automaticky. Strojově čitelný seznam problémů se ukládá do `docs/data/missing.json`.
+
+Lokální soubor, například `Fallout 3 - Game of the Year Edition.7z`, zůstává beze změny. Vzdálená kopie dostane technický název odvozený od interního ID a hashe, například:
+
+```text
+x360-425307d5-fallout-3-game-of-the-year-edition-a91f38c2e741.7z
+```
+
+Technické názvy slouží k jednoznačnému párování a verzování. Nesmí se používat k obcházení oprávněných odstranění nebo podmínek služby.
+
+## První spuštění na novém počítači
+
+Vyžaduje Python 3.11 nebo novější. V PowerShellu spusťte:
 
 ```powershell
 cd C:\Users\Administrator\Documents\GitHub\X360-CZ-Links-Tracker
@@ -29,151 +63,25 @@ Copy-Item .env.example .env
 
 `config.json` a `.env` Git ignoruje. Hesla ani tokeny se nesmí commitovat.
 
-## Přihlášení
+## Pokročilé příkazy
 
-Do `.env` vyplňte pro Webshare buď účet:
-
-```dotenv
-WEBSHARE_USERNAME=uzivatel
-WEBSHARE_PASSWORD=unikatni-heslo
-```
-
-nebo existující session token:
-
-```dotenv
-WEBSHARE_WST=token
-```
-
-Pro eDisk nejdřív v účtu aktivujte FTP a potom vyplňte:
-
-```dotenv
-EDISK_USERNAME=uzivatel
-EDISK_PASSWORD=jine-unikatni-heslo
-```
-
-Použijte pro služby rozdílná hesla. Stejný e-mail je v pořádku, stejné heslo by umožnilo napadení všech replik najednou.
-
-## Import katalogu
-
-Excel vedený v repozitáři je `source/X360_CZ_GamesList_web_databaze.xlsx`. Běžná aktualizace proto vypadá takto:
-
-1. nahraďte tento soubor novou verzí Excelu,
-2. změnu commitněte a pushněte na větev `main`,
-3. GitHub Actions automaticky znovu vytvoří JSON, zkontroluje Webshare a publikuje web.
-
-Ručně lze stejný kompletní krok spustit příkazem:
+Tyto příkazy nejsou při běžném používání potřeba:
 
 ```powershell
+# Kompletní lokální kontrola
+python archive_tool.py scan
+
+# Kontrola včetně SHA-256 všech archivů
+python archive_tool.py scan --hash
+
+# Pouze zobrazit plán opravy
+python archive_tool.py repair
+
+# Provést upload po následném ručním potvrzení
+python archive_tool.py repair --apply
+
+# Ručně znovu vytvořit katalog a web
 python archive_tool.py refresh
 ```
 
-Jednorázový import Excelu z jiné cesty zůstává k dispozici:
-
-```powershell
-python archive_tool.py import-xlsx "C:\cesta\X360_CZ_GamesList_web_databaze.xlsx"
-```
-
-Výsledkem je `catalog/games.json`. Stabilním identifikátorem položky je kombinace Xbox Title ID a názvu varianty. Dvě různé edice mohou mít stejné Title ID.
-
-Odlišný fyzický název se zapisuje do `catalog/local-aliases.json`. Scanner díky tomu nemusí měnit lokální soubor.
-
-Při lokálním scanu se také aktualizuje `catalog/archive-sizes.json`. Obsahuje pouze interní ID a velikost archivu, nikdy lokální cestu. Díky němu GitHub pozná i vzdálený soubor se správným názvem, který je neúplný nebo poškozený.
-
-## Kontrola
-
-```powershell
-python archive_tool.py scan
-```
-
-Rychlý scan porovnává názvy a velikosti. Hash všech lokálních archivů lze dopočítat samostatně:
-
-```powershell
-python archive_tool.py scan --hash
-```
-
-U velké knihovny může kompletní SHA-256 kontrola trvat dlouho. Při uploadu se hash cílového souboru spočítá automaticky.
-
-Stav se ukládá pouze lokálně do `.archive-state/` a neodesílá se do GitHubu.
-
-## Plán a oprava
-
-### Nejjednodušší interaktivní varianta
-
-Po aktualizaci repozitáře přes GitHub Desktop dvakrát klikněte na `SPUSTIT-UPDATER.bat`. Zadejte:
-
-1. cestu ke složce s `.7z` archivy,
-2. Webshare jméno nebo e-mail,
-3. Webshare heslo, které se při psaní nezobrazuje a nikam se neukládá.
-
-Updater provede čerstvou lokální i vzdálenou kontrolu, vypíše názvy a celkovou velikost chybějících kopií a nic nenahraje, dokud nenapíšete přesně `UPLOAD`. Průběh uploadu se zobrazuje v procentech. Denní GitHub kontrola ukládá strojově čitelný seznam problémů také do `docs/data/missing.json`.
-
-Pokud na novém počítači chybí knihovny, jednorázově spusťte `python -m pip install -r requirements.txt`.
-
-Nejdřív pouze zobrazte plán:
-
-```powershell
-python archive_tool.py repair
-```
-
-Tento příkaz nic nenahrává. Skutečný upload vyžaduje přepínač a následné napsání slova `UPLOAD`:
-
-```powershell
-python archive_tool.py repair --apply
-```
-
-Webshare upload je navíc ve výchozí konfiguraci blokovaný pomocí `upload_enabled: false`. Zapněte ho až po kontrole dry-run plánu změnou hodnoty na `true` v lokálním `config.json`.
-
-První živý test lze omezit na jednu hru podle Xbox Title ID:
-
-```powershell
-python archive_tool.py repair --id 415607D2
-python archive_tool.py repair --id 415607D2 --apply
-```
-
-Lokální soubor například `Fallout 3 - Game of the Year Edition.7z` zůstane beze změny. Vzdálená kopie dostane technický název složený z interního ID a hashe, například:
-
-```text
-x360-425307d5-fallout-3-game-of-the-year-edition-a91f38c2e741.7z
-```
-
-Technické názvy slouží k jednoznačnému párování a verzování. Nesmí se používat k obcházení oprávněných odstranění nebo podmínek služby.
-
-## Webový katalog
-
-Po scanu vygenerujte veřejná data:
-
-```powershell
-python archive_tool.py build-site
-```
-
-Statický web je v `docs/`. Neobsahuje lokální cesty, hesla ani tokeny. V nastavení repozitáře jednorázově zvolte **Settings → Pages → Source: Deploy from a branch**, větev **main**, složku **/docs** a klikněte na **Save**. Denní workflow aktualizuje obsah této složky a GitHub Pages jej po commitu automaticky publikuje.
-
-## Automatický provoz na GitHubu
-
-Workflow `Denní kontrola a publikace katalogu` běží:
-
-- po změně zdrojového Excelu, scanneru, aliasů nebo CI konfigurace,
-- každý den v 05:15 UTC,
-- ručně přes **GitHub → Actions → Denní kontrola a publikace katalogu → Run workflow**.
-
-GitHub se připojuje pouze k veřejné složce Webshare, takže v repozitáři nejsou potřeba žádná hesla ani tokeny. Workflow importuje Excel, zkontroluje dostupnost každé hry, vytvoří `docs/data/games.json`, případnou změnu stavu commitne a následně nasadí GitHub Pages.
-
-GitHub Actions nevidí lokální disky s archivy a záměrně nic nenahrává. Když web ohlásí chybějící kopii, spusťte lokálně:
-
-```powershell
-python archive_tool.py scan
-python archive_tool.py repair
-python archive_tool.py repair --apply
-```
-
-Po uploadu lze buď počkat na další denní kontrolu, nebo workflow spustit ručně a web se aktualizuje hned. Přidání dalších her tedy vyžaduje jen doplnit Excel, uložit jej do `source/`, commitnout a pushnout; samotný web i kontrola Webshare se provedou automaticky.
-
-## Testy
-
-```powershell
-python -m unittest -v
-```
-
-## Bezpečnost a distribuce
-
-Automatickou obnovu používejte pouze pro soubory, které smíte na dané službě ukládat a distribuovat. Pokud služba odstraní soubor kvůli právnímu hlášení, projekt není určen k maskování a opakovanému obcházení takového odstranění.
+Stav lokální kontroly se ukládá do `.archive-state/` a neposílá se na GitHub. Odlišné fyzické názvy archivů lze zapsat do `catalog/local-aliases.json`, takže není nutné přejmenovávat lokální soubory.

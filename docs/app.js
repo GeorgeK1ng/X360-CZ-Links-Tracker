@@ -19,7 +19,20 @@ const elements = {
   missing: document.querySelector('#missing-count'),
   empty: document.querySelector('#empty'),
   error: document.querySelector('#load-error'),
+  loadControls: document.querySelector('#load-controls'),
+  loadCount: document.querySelector('#load-count'),
   loadMore: document.querySelector('#load-more'),
+  show100: document.querySelector('#show-100'),
+  showAll: document.querySelector('#show-all'),
+  legalDialog: document.querySelector('#legal-dialog'),
+  legalAccept: document.querySelector('#legal-accept'),
+  legalDecline: document.querySelector('#legal-decline'),
+  legalOpeners: document.querySelectorAll('.open-legal'),
+  downloadDialog: document.querySelector('#download-dialog'),
+  downloadDialogClose: document.querySelector('#download-dialog-close'),
+  downloadGame: document.querySelector('#download-game'),
+  downloadConfirm: document.querySelector('#download-confirm'),
+  downloadContinue: document.querySelector('#download-continue'),
   dialog: document.querySelector('#package-dialog'),
   dialogTitle: document.querySelector('#package-dialog-title'),
   dialogContent: document.querySelector('#package-dialog-content'),
@@ -27,6 +40,7 @@ const elements = {
 };
 
 const collator = new Intl.Collator('cs', { sensitivity: 'base', numeric: true });
+let pendingDownloadUrl = '';
 
 function normalized(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('cs');
@@ -207,13 +221,19 @@ function createGameCard(game) {
     }
     const downloads = card.querySelector('.downloads');
     for (const [name, url] of Object.entries(game.download_urls || {})) {
-      const link = document.createElement('a');
+      const link = document.createElement('button');
       link.className = 'download-link';
-      link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      link.type = 'button';
       link.textContent = `Stáhnout z ${name}`;
       link.setAttribute('aria-label', `Stáhnout ${game.title} z ${name}`);
+      link.addEventListener('click', event => {
+        event.preventDefault();
+        pendingDownloadUrl = url;
+        elements.downloadGame.textContent = game.title;
+        elements.downloadConfirm.checked = false;
+        elements.downloadContinue.disabled = true;
+        elements.downloadDialog.showModal();
+      });
       downloads.append(link);
     }
     return card;
@@ -244,8 +264,12 @@ function render() {
   elements.shown.textContent = matchesAll.length;
   elements.missing.textContent = state.games.filter(game => game.providers?.webshare === 'missing').length;
   elements.empty.hidden = matchesAll.length !== 0;
-  elements.loadMore.hidden = visibleGames.length >= matchesAll.length;
-  elements.loadMore.textContent = `Zobrazit další · ${visibleGames.length} z ${matchesAll.length}`;
+  const hasMore = visibleGames.length < matchesAll.length;
+  elements.loadControls.hidden = !hasMore;
+  elements.loadCount.textContent = `Zobrazeno ${visibleGames.length.toLocaleString('cs-CZ')} z ${matchesAll.length.toLocaleString('cs-CZ')}`;
+  elements.loadMore.textContent = `Zobrazit dalších ${Math.min(PAGE_SIZE, matchesAll.length - visibleGames.length).toLocaleString('cs-CZ')}`;
+  elements.show100.hidden = visibleGames.length >= 100 || matchesAll.length <= 100;
+  elements.showAll.textContent = `Zobrazit vše · ${matchesAll.length.toLocaleString('cs-CZ')}`;
 }
 
 elements.search.addEventListener('input', () => {
@@ -263,6 +287,73 @@ for (const control of [elements.language, elements.status, elements.genre,
 elements.loadMore.addEventListener('click', () => {
   state.visibleLimit += PAGE_SIZE;
   render();
+});
+
+elements.show100.addEventListener('click', () => {
+  state.visibleLimit = 100;
+  render();
+});
+
+elements.showAll.addEventListener('click', () => {
+  state.visibleLimit = Number.POSITIVE_INFINITY;
+  render();
+});
+
+const LEGAL_ACCEPTANCE_KEY = 'x360cz-legal-accepted-v1';
+let legalAccepted = false;
+try {
+  legalAccepted = localStorage.getItem(LEGAL_ACCEPTANCE_KEY) === 'yes';
+} catch (_) {
+  // Soukromý režim může zablokovat úložiště; dialog pak zobrazíme znovu.
+}
+
+function openLegalDialog() {
+  if (!elements.legalDialog.open) elements.legalDialog.showModal();
+}
+
+for (const opener of elements.legalOpeners) opener.addEventListener('click', openLegalDialog);
+
+elements.legalAccept.addEventListener('click', () => {
+  legalAccepted = true;
+  try {
+    localStorage.setItem(LEGAL_ACCEPTANCE_KEY, 'yes');
+  } catch (_) {
+    // Souhlas platí alespoň po dobu aktuální návštěvy.
+  }
+  elements.legalDialog.close();
+});
+
+elements.legalDecline.addEventListener('click', () => {
+  if (history.length > 1) history.back();
+  else location.href = 'https://github.com/GeorgeK1ng/X360-CZ-Links-Tracker';
+});
+
+elements.legalDialog.addEventListener('cancel', event => {
+  if (!legalAccepted) event.preventDefault();
+});
+
+if (!legalAccepted) openLegalDialog();
+
+elements.downloadConfirm.addEventListener('change', () => {
+  elements.downloadContinue.disabled = !elements.downloadConfirm.checked;
+});
+
+function closeDownloadDialog() {
+  pendingDownloadUrl = '';
+  elements.downloadConfirm.checked = false;
+  elements.downloadContinue.disabled = true;
+  elements.downloadDialog.close();
+}
+
+elements.downloadDialogClose.addEventListener('click', closeDownloadDialog);
+elements.downloadDialog.addEventListener('click', event => {
+  if (event.target === elements.downloadDialog) closeDownloadDialog();
+});
+elements.downloadContinue.addEventListener('click', () => {
+  if (!elements.downloadConfirm.checked || !pendingDownloadUrl) return;
+  const target = pendingDownloadUrl;
+  closeDownloadDialog();
+  window.open(target, '_blank', 'noopener,noreferrer');
 });
 
 elements.dialogClose.addEventListener('click', () => elements.dialog.close());

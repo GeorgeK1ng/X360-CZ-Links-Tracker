@@ -95,13 +95,31 @@ def scan_remotes(providers: dict) -> dict:
 
 
 def match_remote(record: dict, remote_files: list[dict]) -> dict | None:
+    expected_size = record.get("size")
+
+    def size_matches(item: dict) -> bool:
+        return expected_size is None or int(item.get("size", 0)) in {0, int(expected_size)}
+
     digest = record.get("sha256")
     if digest:
         expected = remote_name(record["asset_id"], digest).casefold()
         for item in remote_files:
             if item["name"].casefold() == expected and not item.get("removed"):
-                if int(item.get("size", 0)) == int(record.get("size", -1)):
+                if size_matches(item):
                     return item
+
+    # GitHub Actions does not have the local archive hash. The asset ID is stable and
+    # the uploader puts it into every anonymized name, so the public scan can still
+    # reconcile the file safely. The tracked size prevents a partial/wrong upload
+    # from being accepted as healthy.
+    technical_name = re.compile(
+        rf"^x360-{re.escape(record['asset_id'])}-[0-9a-f]{{12}}\.7z$",
+        re.IGNORECASE,
+    )
+    for item in remote_files:
+        if technical_name.fullmatch(item["name"]) and not item.get("removed") and size_matches(item):
+            return item
+
     # Compatibility with the old human-readable uploads.
     legacy_names = {record["expected_filename"].casefold(),
                     record.get("local_filename", record["expected_filename"]).casefold()}
@@ -111,7 +129,7 @@ def match_remote(record: dict, remote_files: list[dict]) -> dict | None:
         item_stem = Path(item_name).stem
         item_without_suffix = re.sub(r"\([a-z0-9]+\)$", "", item_stem) + Path(item_name).suffix
         if (item_name in legacy_names or item_without_suffix in legacy_names) and not item.get("removed"):
-            if "size" not in record or int(item.get("size", 0)) in {0, int(record["size"])}:
+            if size_matches(item):
                 return item
     return None
 

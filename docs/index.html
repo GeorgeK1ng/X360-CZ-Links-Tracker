@@ -22,7 +22,13 @@
   </header>
 
   <main>
-    <section class="controls" aria-label="Filtrování katalogu">
+    <div class="catalog-layout">
+    <aside class="filter-sidebar" aria-label="Filtrování katalogu">
+      <div class="filter-heading">
+        <p class="eyebrow">Výběr katalogu</p>
+        <h2>Filtrovat hry</h2>
+      </div>
+    <section class="controls">
       <label class="search">
         <span>Hledat</span>
         <input id="search" type="search" placeholder="Název, vývojář, Title ID…" autocomplete="off">
@@ -79,10 +85,14 @@
       </label>
       <button id="reset-filters" type="button">Zrušit filtry</button>
     </section>
+    </aside>
 
+    <div class="catalog-results">
     <p id="load-error" class="error" hidden></p>
     <section id="games" class="games" aria-live="polite"></section>
     <p id="empty" class="empty" hidden>Žádná hra neodpovídá zvoleným filtrům.</p>
+    </div>
+    </div>
   </main>
 
   <footer class="site-footer">
@@ -122,14 +132,14 @@
         <div><dt>Title Update</dt><dd class="title-update"></dd></div>
       </dl>
       <div class="package-details">
-        <div class="package-row dlc-row" hidden>
-          <span class="package-label">DLC v balíčku</span>
+        <details class="package-row dlc-row" hidden>
+          <summary><span>DLC v balíčku</span><span class="dlc-count"></span></summary>
           <ul class="dlc-list"></ul>
-        </div>
-        <div class="package-row note-row" hidden>
-          <span class="package-label">Poznámka</span>
+        </details>
+        <details class="package-row note-row" hidden>
+          <summary><span>Poznámka</span></summary>
           <p class="game-note"></p>
-        </div>
+        </details>
       </div>
       <div class="tags"></div>
       <div class="providers"></div>

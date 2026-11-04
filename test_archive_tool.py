@@ -52,6 +52,18 @@ class ReconciliationTests(unittest.TestCase):
         item = {"name": remote_name(GAME["asset_id"], "a" * 64), "size": 7, "removed": False}
         self.assertEqual(match_remote(record, [item]), item)
 
+    def test_remote_only_matches_anonymized_name_without_local_hash(self):
+        record = {"asset_id": GAME["asset_id"], "title_id": GAME["title_id"],
+                  "expected_filename": GAME["expected_filename"], "size": 7}
+        item = {"name": remote_name(GAME["asset_id"], "b" * 64), "size": 7, "removed": False}
+        self.assertEqual(match_remote(record, [item]), item)
+
+    def test_remote_only_rejects_anonymized_name_with_wrong_size(self):
+        record = {"asset_id": GAME["asset_id"], "title_id": GAME["title_id"],
+                  "expected_filename": GAME["expected_filename"], "size": 7}
+        item = {"name": remote_name(GAME["asset_id"], "b" * 64), "size": 6, "removed": False}
+        self.assertIsNone(match_remote(record, [item]))
+
     def test_provider_error_blocks_plan_instead_of_claiming_healthy(self):
         local = {"files": {GAME["asset_id"]: {"asset_id": GAME["asset_id"],
                  "title_id": GAME["title_id"], "expected_filename": GAME["expected_filename"],

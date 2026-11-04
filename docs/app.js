@@ -122,7 +122,7 @@ function setupGallery(card, game) {
 function setupPackageDetails(card, game) {
   card.querySelector('.format').textContent = game.format || '—';
   const update = Number(game.title_update || 0);
-  card.querySelector('.title-update').textContent = update > 0 ? `TU ${update}` : 'neuveden';
+  card.querySelector('.title-update').textContent = update > 0 ? `TU ${update}` : '0';
 
   const dlc = String(game.dlc || '')
     .split(/\r?\n|\s*;\s*/)
@@ -131,6 +131,7 @@ function setupPackageDetails(card, game) {
   const dlcRow = card.querySelector('.dlc-row');
   if (dlc.length) {
     dlcRow.hidden = false;
+    card.querySelector('.dlc-count').textContent = dlc.length.toLocaleString('cs-CZ');
     const list = card.querySelector('.dlc-list');
     for (const name of dlc) {
       const item = document.createElement('li');
@@ -145,6 +146,7 @@ function setupPackageDetails(card, game) {
     noteRow.hidden = false;
     card.querySelector('.game-note').textContent = note;
   }
+  card.querySelector('.package-details').hidden = !dlc.length && !note;
 }
 
 function render() {

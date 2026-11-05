@@ -1,4 +1,23 @@
 {
-  "count": 0,
-  "games": []
+  "count": 3,
+  "games": [
+    {
+      "asset_id": "555308ae-assassin-s-creed-iii",
+      "title_id": "555308AE",
+      "title": "Assassin's Creed III",
+      "expected_filename": "Assassin's Creed III.7z"
+    },
+    {
+      "asset_id": "425307e0-fallout-new-vegas-ultimate-edition",
+      "title_id": "425307E0",
+      "title": "Fallout: New Vegas - Ultimate Edition",
+      "expected_filename": "Fallout - New Vegas - Ultimate Edition.7z"
+    },
+    {
+      "asset_id": "425307d5-fallout-3-game-of-the-year-edition",
+      "title_id": "425307D5",
+      "title": "Fallout 3: Game of the Year Edition",
+      "expected_filename": "Fallout 3 - Game of the Year Edition.7z"
+    }
+  ]
 }
